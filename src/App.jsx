@@ -9,9 +9,9 @@ import RegisterStep4 from './pages/sign/RegisterStep4'
 import DamanDashboard from './pages/demand/damanDashboard'
 import SupplierDetail from './pages/demand/supplierDetail'
 import SuppliersList from './pages/demand/suppliersList'
-import Estimate from './pages/estimate/estimate'
+import EstimateList from './pages/estimate/estimateList'
 import EstimateSheet from './pages/estimate/estimateSheet'
-import SentEstimateDetail from './pages/estimate/sentEstimateDetail'
+import EstimateDetail from './pages/estimate/estimateDetail'
 import ReceivedProposalDetail from './pages/estimate/receivedProposalDetail'
 import Contracts from './pages/contract/contracts'
 import DemandNavbar from './components/DemandNavbar'
@@ -48,11 +48,11 @@ function App() {
         <Route path="/demand" element={<CommonLayout><DamanDashboard /></CommonLayout>} />
         <Route path="/demand/supplier/:businessNumber" element={<CommonLayout><SupplierDetail /></CommonLayout>} />
         <Route path="/demand/suppliersList" element={<CommonLayout><SuppliersList /></CommonLayout>} />
-        <Route path="/demand/estimate" element={<CommonLayout><Estimate /></CommonLayout>} />
-        <Route path="/demand/estimateSheet" element={<CommonLayout><EstimateSheet /></CommonLayout>} />
-        <Route path="/demand/sent-estimates/:id" element={<CommonLayout><SentEstimateDetail /></CommonLayout>} />
-        <Route path="/demand/received-proposals/:id" element={<CommonLayout><ReceivedProposalDetail /></CommonLayout>} />
-        <Route path="/demand/contracts" element={<CommonLayout><Contracts /></CommonLayout>} />
+        <Route path="/estimateList" element={<CommonLayout><EstimateList /></CommonLayout>} />
+        <Route path="/estimateSheet" element={<CommonLayout><EstimateSheet /></CommonLayout>} />
+        <Route path="/estimateDetail/:id" element={<CommonLayout><EstimateDetail /></CommonLayout>} />
+        <Route path="/received-proposals/:id" element={<CommonLayout><ReceivedProposalDetail /></CommonLayout>} />
+        <Route path="/contracts" element={<CommonLayout><Contracts /></CommonLayout>} />
       </Routes>
     </BrowserRouter>
   )

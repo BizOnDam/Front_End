@@ -1,23 +1,26 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import {
+  categories,
+  createInitialItem,
+  handleCategoryChange,
+  handleDetailCategoryChange,
+  handleItemChange,
+  addItem,
+  removeItem,
+  handleSubmit
+} from './processEstimateSheet';
 
 function EstimateSheet() {
+  const [items, setItems] = useState([createInitialItem(1)]);
   const [form, setForm] = useState({
-    item: '',
-    quantity: '',
-    deadline: '',
-    region: '',
-    method: '',
-    request: '',
+    due_date: '',
+    detail: ''
   });
+  const [selectedDetailCategories, setSelectedDetailCategories] = useState({});
 
-  const handleChange = (e) => {
+  const handleFormChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert(`입력값 확인:\n\n품목명: ${form.item}\n수량: ${form.quantity}\n납기일: ${form.deadline}\n지역: ${form.region}\n인쇄/제작 방식: ${form.method}\n요청 사항: ${form.request}`);
   };
 
   return (
@@ -26,31 +29,120 @@ function EstimateSheet() {
         <h2 className="mb-4">견적 요청서 작성</h2>
         <div className="card shadow-sm mb-4">
           <div className="card-body">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={(e) => handleSubmit(e, items, form)}>
+              {items.map((item, index) => (
+                <div key={item.id} className="border rounded p-3 mb-3">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <h5 className="mb-0">품목 {index + 1}</h5>
+                    {items.length > 1 && (
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={() => removeItem(item.id, items, setItems, setSelectedDetailCategories)}
+                      >
+                        삭제
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="row">
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">품명</label>
+                      <select 
+                        className="form-select" 
+                        value={item.category_code} 
+                        onChange={(e) => handleCategoryChange(item.id, e.target.value, items, setItems, setSelectedDetailCategories)}
+                        required
+                      >
+                        <option value="">품명을 선택하세요</option>
+                        {categories.map(category => (
+                          <option key={category.code} value={category.code}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">세부품명</label>
+                      <select 
+                        className="form-select" 
+                        value={item.detail_category_code} 
+                        onChange={(e) => handleDetailCategoryChange(item.id, e.target.value, items, setItems, selectedDetailCategories)}
+                        required
+                        disabled={!item.category_code}
+                      >
+                        <option value="">세부품명을 선택하세요</option>
+                        {selectedDetailCategories[item.id]?.map(category => (
+                          <option key={category.code} value={category.code}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">수량</label>
+                      <input 
+                        type="number" 
+                        className="form-control" 
+                        value={item.quantity} 
+                        onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value, items, setItems)}
+                        required 
+                      />
+                    </div>
+                    
+                    <div className="col-md-6 mb-3">
+                      <label className="form-label">품목 규격</label>
+                      <input 
+                        type="text" 
+                        className="form-control" 
+                        value={item.specification} 
+                        onChange={(e) => handleItemChange(item.id, 'specification', e.target.value, items, setItems)}
+                        placeholder="예: 개, kg, m 등"
+                        required 
+                      />
+                    </div>
+
+                  </div>
+                </div>
+              ))}
+
               <div className="mb-3">
-                <label className="form-label">품목명</label>
-                <input type="text" className="form-control" name="item" value={form.item} onChange={handleChange} required />
+                <button 
+                  type="button" 
+                  className="btn btn-outline-primary"
+                  onClick={() => addItem(items, setItems)}
+                >
+                  + 품목 추가
+                </button>
               </div>
+
               <div className="mb-3">
-                <label className="form-label">수량</label>
-                <input type="number" className="form-control" name="quantity" value={form.quantity} onChange={handleChange} required />
+                <label className="form-label">납품기한</label>
+                <input 
+                  type="date" 
+                  className="form-control" 
+                  name="due_date" 
+                  value={form.due_date} 
+                  onChange={handleFormChange} 
+                  required 
+                />
               </div>
+
               <div className="mb-3">
-                <label className="form-label">납기일</label>
-                <input type="date" className="form-control" name="deadline" value={form.deadline} onChange={handleChange} required />
+                <label className="form-label">요청상세설명</label>
+                <textarea 
+                  className="form-control" 
+                  name="detail" 
+                  value={form.detail} 
+                  onChange={handleFormChange} 
+                  placeholder="견적 요청에 대한 상세 설명을 입력해주세요"
+                  rows="4"
+                  required
+                ></textarea>
               </div>
-              <div className="mb-3">
-                <label className="form-label">지역</label>
-                <input type="text" className="form-control" name="region" value={form.region} onChange={handleChange} required />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">인쇄/제작 방식</label>
-                <input type="text" className="form-control" name="method" value={form.method} onChange={handleChange} required />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">요청 사항</label>
-                <textarea className="form-control" name="request" value={form.request} onChange={handleChange} placeholder="예: 친환경 포장" rows="4"></textarea>
-              </div>
+
               <div className="d-flex justify-content-end">
                 <button className="btn btn-primary px-5" type="submit">견적 요청</button>
               </div>

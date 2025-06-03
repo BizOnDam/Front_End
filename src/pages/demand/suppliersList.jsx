@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supplierDetailData } from '../../data/supplierData';
+import MockCompanies from '../../data/MockCompanies';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function SuppliersList() {
@@ -10,18 +10,18 @@ function SuppliersList() {
   const [mainItem, setMainItem] = useState('');
 
   // 주요 품목 목록 추출 (중복 제거)
-  const mainItems = Array.from(new Set(supplierDetailData.map(s => s.mainItems)));
+  const mainItems = Array.from(new Set(MockCompanies.map(s => s.business_type)));
 
   // 검색/필터/정렬 적용
-  let filtered = supplierDetailData.filter(supplier =>
-    (supplier.name.includes(keyword) || supplier.businessNumber.includes(keyword)) &&
-    (mainItem === '' || supplier.mainItems === mainItem)
+  let filtered = MockCompanies.filter(supplier =>
+    (supplier.company_name_kr.includes(keyword) || supplier.business_number.includes(keyword)) &&
+    (mainItem === '' || supplier.business_type === mainItem)
   );
   filtered = filtered.sort((a, b) => {
-    if (sort === 'score-desc') return b.rating - a.rating;
-    if (sort === 'score-asc') return a.rating - b.rating;
-    if (sort === 'name-asc') return a.name.localeCompare(b.name, 'ko');
-    if (sort === 'name-desc') return b.name.localeCompare(a.name, 'ko');
+    if (sort === 'score-desc') return b.average_rating - a.average_rating;
+    if (sort === 'score-asc') return a.average_rating - b.average_rating;
+    if (sort === 'name-asc') return a.company_name_kr.localeCompare(b.company_name_kr, 'ko');
+    if (sort === 'name-desc') return b.company_name_kr.localeCompare(a.company_name_kr, 'ko');
     return 0;
   });
 
@@ -85,13 +85,13 @@ function SuppliersList() {
                     <tr><td colSpan={5} className="text-center text-muted">검색 결과가 없습니다.</td></tr>
                   ) : (
                     filtered.map(supplier => (
-                      <tr key={supplier.businessNumber}>
-                        <td>{supplier.name}</td>
-                        <td>{supplier.businessNumber}</td>
-                        <td>{supplier.mainItems}</td>
-                        <td>{supplier.rating}/5.0</td>
+                      <tr key={supplier.business_number}>
+                        <td>{supplier.company_name_kr}</td>
+                        <td>{supplier.business_number}</td>
+                        <td>{supplier.business_type}</td>
+                        <td>{supplier.average_rating}/5.0</td>
                         <td>
-                          <Link to={`/demand/supplier/${supplier.businessNumber}`} className="btn btn-sm btn-outline-primary">상세보기</Link>
+                          <Link to={`/demand/supplier/${supplier.business_number}`} className="btn btn-sm btn-outline-primary">상세보기</Link>
                         </td>
                       </tr>
                     ))

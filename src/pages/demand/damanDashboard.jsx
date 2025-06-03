@@ -104,7 +104,7 @@ function DamanDashboard() {
           <div className="card shadow-sm mb-4">
             <div className="card-header bg-white d-flex justify-content-between align-items-center">
               <h5 className="mb-0">견적 관리</h5>
-              <Link to="/demand/estimate" className="btn btn-outline-primary btn-sm">상세보기</Link>
+              <Link to="/estimate" className="btn btn-outline-primary btn-sm">상세보기</Link>
             </div>
             <div className="card-body">
               <div className="table-responsive">
@@ -144,7 +144,7 @@ function DamanDashboard() {
           <div className="card shadow-sm mb-4">
             <div className="card-header bg-white d-flex justify-content-between align-items-center">
               <h5 className="mb-0">진행 중인 계약/납품 일정</h5>
-              <Link to="/demand/contracts" className="btn btn-outline-primary btn-sm">상세보기</Link>
+              <Link to="/contracts" className="btn btn-outline-primary btn-sm">상세보기</Link>
             </div>
             <div className="card-body">
               <div className="table-responsive">

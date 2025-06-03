@@ -3,7 +3,7 @@ import Calendar from 'react-calendar';
 import { FaFileContract, FaFileDownload, FaTruck, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import 'react-calendar/dist/Calendar.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { contractsData, estimateRequestsData, estimateResponsesData } from '../../data/contractsData';
+import { mockEstimateRequests } from '../../data/MockEstimateList';
 
 // 달력 커스텀 스타일
 const calendarStyles = `
@@ -18,7 +18,7 @@ const calendarStyles = `
 `;
 
 function Contracts() {
-  const [contracts] = useState(contractsData);
+  const [contracts] = useState(mockEstimateRequests);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
   const [selectedContract, setSelectedContract] = useState(null);
@@ -34,15 +34,7 @@ function Contracts() {
 
   // 견적 요청에서 마감일 가져오기
   const getDueDate = (contract) => {
-    const estimateResponse = estimateResponsesData.find(
-      response => response.response_id === contract.response_id
-    );
-    if (!estimateResponse) return contract.contract_date;
-  
-    const estimateRequest = estimateRequestsData.find(
-      request => request.request_id === estimateResponse.request_id
-    );
-    return estimateRequest ? estimateRequest.due_date : contract.contract_date;
+    return contract.request?.due_date || contract.created_at;
   };
   
 
@@ -52,13 +44,26 @@ function Contracts() {
     
     // 계약 데이터에서 이벤트 추가
     contracts.forEach(contract => {
-      const dueDate = getDueDate(contract);
-      if (new Date(dueDate).toDateString() === date.toDateString()) {
+      if (!contract.contract) return;
+
+      const contractDate = new Date(contract.contract.created_at);
+      const dueDate = new Date(contract.request.due_date);
+
+      if (contractDate.toDateString() === date.toDateString()) {
         events.push({
-          type: '계약',
-          title: `${contract.supplier_company_name} - ${contract.item_description}`,
-          date: dueDate,
-          status: contract.status
+          type: '계약체결',
+          title: `${contract.contract.supplier_company_id} - ${contract.items.map(item => item.detail_category_name).join(', ')}`,
+          date: contract.contract.created_at,
+          status: contract.contract.tracking_number ? '배송현황확인' : '배송 준비중'
+        });
+      }
+
+      if (dueDate.toDateString() === date.toDateString()) {
+        events.push({
+          type: '납품기한',
+          title: `${contract.contract.supplier_company_id} - ${contract.items.map(item => item.detail_category_name).join(', ')}`,
+          date: contract.request.due_date,
+          status: contract.contract.tracking_number ? '배송현황확인' : '배송 준비중'
         });
       }
     });
@@ -72,7 +77,7 @@ function Contracts() {
     if (events.length > 0) {
       return (
         <div className="calendar-event-dot" style={{ 
-          color: events[0].type === '계약' ? '#0d6efd' : '#198754'
+          color: events[0].type === '계약체결' ? '#0d6efd' : '#198754'
         }}>
           ●
         </div>
@@ -84,15 +89,14 @@ function Contracts() {
   // 선택된 날짜의 이벤트 표시
   const selectedDateEvents = getEventsForDate(selectedDate);
 
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      'PREPARING_DELIVERY': { text: '배송 준비중', color: 'warning' },
-      'DELIVERING': { text: '배송중', color: 'info' },
-      'DELIVERED': { text: '배송완료', color: 'success' },
-      'CANCELLED': { text: '취소됨', color: 'danger' }
-    };
-    const { text, color } = statusMap[status] || { text: status, color: 'secondary' };
-    return <span className={`badge bg-${color}`}>{text}</span>;
+  const getStatusBadge = (contract) => {
+    if (!contract.contract) {
+      return null;
+    }
+    if (!contract.contract.tracking_number) {
+      return <span className="badge bg-warning">배송 준비중</span>;
+    }
+    return <span className="badge bg-info">배송현황확인</span>;
   };
 
   const handleViewContract = (contractId) => {
@@ -111,11 +115,13 @@ function Contracts() {
   };
 
   // 마감일 기준으로 정렬된 계약 목록
-  const sortedContracts = [...contracts].sort((a, b) => {
-    const dateA = new Date(getDueDate(a));
-    const dateB = new Date(getDueDate(b));
-    return dateB - dateA;
-  });
+  const sortedContracts = [...contracts]
+    .filter(contract => contract.contract) // contract 객체가 있는 경우만 필터링
+    .sort((a, b) => {
+      const dateA = new Date(getDueDate(a));
+      const dateB = new Date(getDueDate(b));
+      return dateB - dateA;
+    });
 
   // 페이지네이션 관련 계산
   const totalPages = Math.ceil(sortedContracts.length / itemsPerPage);
@@ -163,7 +169,7 @@ function Contracts() {
                           <li key={index} className="mb-2">
                             <div className="d-flex align-items-center">
                               <span className={`badge bg-${
-                                event.type === '계약' ? 'primary' : 'success'
+                                event.type === '계약체결' ? 'primary' : 'success'
                               } me-2`}>
                                 {event.type}
                               </span>
@@ -192,20 +198,30 @@ function Contracts() {
                     <th>공급기업</th>
                     <th>품목</th>
                     <th>계약금액</th>
-                    <th>마감일</th>
+                    <th>계약체결일</th>
+                    <th>납품기한</th>
                     <th>배송상태</th>
-                    <th>작업</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentContracts.map(contract => (
-                    <tr key={contract.contract_id}>
-                      <td>{contract.contract_id}</td>
-                      <td>{contract.supplier_company_name}</td>
-                      <td>{contract.item_description}</td>
-                      <td>{formatCurrency(contract.total_price)}</td>
-                      <td>{getDueDate(contract)}</td>
-                      <td>{getStatusBadge(contract.status)}</td>
+                    <tr key={contract.contract.contract_id}>
+                      <td>{contract.contract.contract_id}</td>
+                      <td>{contract.contract.supplier_company_id}</td>
+                      <td>
+                        {contract.items.map(item => item.detail_category_name).join(', ').length > 10 
+                          ? contract.items.map(item => item.detail_category_name).join(', ').substring(0, 10) + '...'
+                          : contract.items.map(item => item.detail_category_name).join(', ')}
+                      </td>
+                      <td>
+                        {contract.response?.total_price 
+                          ? formatCurrency(contract.response.total_price)
+                          : '-'}
+                      </td>
+                      <td>{contract.contract.created_at.split(' ')[0]}</td>
+                      <td>{contract.request.due_date}</td>
+                      <td>{getStatusBadge(contract)}</td>
                       <td>
                         <div className="btn-group">
                           <button 
@@ -279,48 +295,50 @@ function Contracts() {
                         <tbody>
                           <tr>
                             <th>계약번호</th>
-                            <td>{selectedContract.contract_id}</td>
+                            <td>{selectedContract.contract.contract_id}</td>
                           </tr>
                           <tr>
                             <th>공급업체</th>
-                            <td>{selectedContract.supplier_company_name}</td>
+                            <td>{selectedContract.contract.supplier_company_id}</td>
                           </tr>
                           <tr>
-                            <th>마감일</th>
-                            <td>{getDueDate(selectedContract)}</td>
+                            <th>계약체결일</th>
+                            <td>{selectedContract.contract.created_at.split(' ')[0]}</td>
+                          </tr>
+                          <tr>
+                            <th>납품기한</th>
+                            <td>{selectedContract.request.due_date}</td>
                           </tr>
                           <tr>
                             <th>계약금액</th>
-                            <td>{formatCurrency(selectedContract.total_price)}</td>
+                            <td>{formatCurrency(selectedContract.response.total_price)}</td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
                     <div className="col-md-6">
-                      <h6>배송 정보</h6>
+                      <h6>계약 정보</h6>
                       <table className="table table-sm">
                         <tbody>
                           <tr>
                             <th>배송상태</th>
-                            <td>{getStatusBadge(selectedContract.status)}</td>
+                            <td>{getStatusBadge(selectedContract)}</td>
                           </tr>
                           <tr>
                             <th>운송장번호</th>
-                            <td>{selectedContract.tracking_number || '-'}</td>
+                            <td>{selectedContract.contract.tracking_number || '-'}</td>
                           </tr>
                           <tr>
-                            <th>견적 응답 ID</th>
-                            <td>{selectedContract.response_id}</td>
+                            <th>결제조건</th>
+                            <td>{selectedContract.contract.payment_terms}</td>
                           </tr>
                           <tr>
-                            <th>계약서 파일</th>
-                            <td>
-                              {selectedContract.contract_file_url ? (
-                                <a href={selectedContract.contract_file_url} target="_blank" rel="noopener noreferrer">
-                                  계약서 보기
-                                </a>
-                              ) : '-'}
-                            </td>
+                            <th>보증기간</th>
+                            <td>{selectedContract.contract.warranty}</td>
+                          </tr>
+                          <tr>
+                            <th>특이사항</th>
+                            <td>{selectedContract.contract.special_terms}</td>
                           </tr>
                         </tbody>
                       </table>
@@ -330,7 +348,24 @@ function Contracts() {
                   <h6>계약 품목</h6>
                   <div className="card">
                     <div className="card-body">
-                      <p className="mb-0">{selectedContract.item_description}</p>
+                      <table className="table table-sm">
+                        <thead>
+                          <tr>
+                            <th>품목</th>
+                            <th>수량</th>
+                            <th>단위</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedContract.items.map((item, index) => (
+                            <tr key={index}>
+                              <td>{item.detail_category_name}</td>
+                              <td>{item.quantity}</td>
+                              <td>{item.specification}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
@@ -338,7 +373,7 @@ function Contracts() {
                   <button 
                     type="button" 
                     className="btn btn-primary"
-                    onClick={() => handleViewContract(selectedContract.contract_id)}
+                    onClick={() => handleViewContract(selectedContract.contract.contract_id)}
                   >
                     <FaFileContract className="me-2" />
                     전자계약 보기
@@ -346,16 +381,16 @@ function Contracts() {
                   <button 
                     type="button" 
                     className="btn btn-success"
-                    onClick={() => handleDownloadOrder(selectedContract.contract_id)}
+                    onClick={() => handleDownloadOrder(selectedContract.contract.contract_id)}
                   >
                     <FaFileDownload className="me-2" />
                     발주서 다운로드
                   </button>
-                  {selectedContract.status === 'DELIVERING' && (
+                  {selectedContract.contract.tracking_number && (
                     <button 
                       type="button" 
                       className="btn btn-info"
-                      onClick={() => window.open(`https://tracking.example.com/${selectedContract.tracking_number}`, '_blank')}
+                      onClick={() => window.open(`https://tracking.example.com/${selectedContract.contract.tracking_number}`, '_blank')}
                     >
                       <FaTruck className="me-2" />
                       배송추적
