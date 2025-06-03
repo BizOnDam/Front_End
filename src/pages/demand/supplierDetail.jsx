@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { supplierDetailData } from './data/supplierData';
+import { supplierDetailData } from '../../data/supplierData';
 
 function SupplierDetail() {
   const navigate = useNavigate();

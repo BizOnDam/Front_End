@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { estimateRequestsData, estimateResponsesData, contractsData } from '../data/contractsData';
+import { estimateRequestsData, estimateResponsesData, contractsData } from '../../data/contractsData';
 
 function ReceivedProposalDetail() {
   const { id } = useParams();

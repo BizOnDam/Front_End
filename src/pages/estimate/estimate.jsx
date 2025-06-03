@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import DemandNavbar from '../../../components/DemandNavbar';
-import Footer from '../../../components/Footer';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link } from 'react-router-dom';
-import { contractsData, estimateRequestsData, estimateResponsesData } from '../data/contractsData';
+import { contractsData, estimateRequestsData, estimateResponsesData } from '../../data/contractsData';
 
 function Estimate() {
   const [contracts] = useState(contractsData);

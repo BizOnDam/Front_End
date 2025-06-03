@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import DemandNavbar from '../../../components/DemandNavbar';
-import Footer from '../../../components/Footer';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function EstimateSheet() {

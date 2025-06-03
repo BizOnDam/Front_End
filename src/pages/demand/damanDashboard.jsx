@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { statsData, quoteData, contractData, historyData } from './data/demandDashboardData';
-import { supplierDetailData } from './data/supplierData';
-import DemandNavbar from '../../components/DemandNavbar';
-import Footer from '../../components/Footer';
+import { statsData, quoteData, contractData, historyData } from '../../data/demandDashboardData';
+import { supplierDetailData } from '../../data/supplierData';
 
 function DamanDashboard() {
   const [stats] = useState(statsData);

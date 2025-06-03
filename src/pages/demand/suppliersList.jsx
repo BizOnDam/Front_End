@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supplierDetailData } from './data/supplierData';
+import { supplierDetailData } from '../../data/supplierData';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function SuppliersList() {

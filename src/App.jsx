@@ -9,11 +9,11 @@ import RegisterStep4 from './pages/sign/RegisterStep4'
 import DamanDashboard from './pages/demand/damanDashboard'
 import SupplierDetail from './pages/demand/supplierDetail'
 import SuppliersList from './pages/demand/suppliersList'
-import Estimate from './pages/demand/estimate/estimate'
-import EstimateSheet from './pages/demand/estimate/estimateSheet'
-import SentEstimateDetail from './pages/demand/estimate/sentEstimateDetail'
-import ReceivedProposalDetail from './pages/demand/estimate/receivedProposalDetail'
-import Contracts from './pages/demand/contract/contracts'
+import Estimate from './pages/estimate/estimate'
+import EstimateSheet from './pages/estimate/estimateSheet'
+import SentEstimateDetail from './pages/estimate/sentEstimateDetail'
+import ReceivedProposalDetail from './pages/estimate/receivedProposalDetail'
+import Contracts from './pages/contract/contracts'
 import DemandNavbar from './components/DemandNavbar'
 import Footer from './components/Footer'
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -44,7 +44,7 @@ function App() {
         <Route path="/RegisterStep3" element={<RegisterStep3 />} />
         <Route path="/RegisterStep4" element={<RegisterStep4 />} />
         <Route path="/supplier" element={<Supplier />} />
-        //TODO 함수 바꾸기
+        {/* TODO 함수로 바꾸기, path 수정하기 */}
         <Route path="/demand" element={<CommonLayout><DamanDashboard /></CommonLayout>} />
         <Route path="/demand/supplier/:businessNumber" element={<CommonLayout><SupplierDetail /></CommonLayout>} />
         <Route path="/demand/suppliersList" element={<CommonLayout><SuppliersList /></CommonLayout>} />

@@ -3,7 +3,7 @@ import Calendar from 'react-calendar';
 import { FaFileContract, FaFileDownload, FaTruck, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import 'react-calendar/dist/Calendar.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { contractsData, estimateRequestsData, estimateResponsesData } from '../data/contractsData';
+import { contractsData, estimateRequestsData, estimateResponsesData } from '../../data/contractsData';
 
 // 달력 커스텀 스타일
 const calendarStyles = `
