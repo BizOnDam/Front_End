@@ -53,8 +53,8 @@ function SuppliersList() {
               <div>
                 <label className="me-2">정렬:</label>
                 <select className="form-select d-inline-block w-auto" value={sort} onChange={e => setSort(e.target.value)}>
-                  <option value="score-desc">평가점수 높은순</option>
-                  <option value="score-asc">평가점수 낮은순</option>
+                  {/* <option value="score-desc">평가점수 높은순</option>
+                  <option value="score-asc">평가점수 낮은순</option> */}
                   <option value="name-asc">기업명 가나다순</option>
                   <option value="name-desc">기업명 다나가순</option>
                 </select>
@@ -76,8 +76,8 @@ function SuppliersList() {
                     <th>기업명</th>
                     <th>사업자등록번호</th>
                     <th>주요 품목</th>
-                    <th>평가점수</th>
-                    <th>상세보기</th>
+                    {/* <th>평가점수</th> */}
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -88,8 +88,9 @@ function SuppliersList() {
                       <tr key={supplier.business_number}>
                         <td>{supplier.company_name_kr}</td>
                         <td>{supplier.business_number}</td>
+                        {/* TODO 주요 품목 수정 */}
                         <td>{supplier.business_type}</td>
-                        <td>{supplier.average_rating}/5.0</td>
+                        {/* <td>{supplier.average_rating}/5.0</td> */}
                         <td>
                           <Link to={`/demand/supplier/${supplier.business_number}`} className="btn btn-sm btn-outline-primary">상세보기</Link>
                         </td>

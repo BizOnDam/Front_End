@@ -72,7 +72,7 @@ function DamanDashboard() {
                       <th>기업명</th>
                       <th>사업자등록번호</th>
                       <th>주요 품목</th>
-                      <th>평가점수</th>
+                      {/* <th>평가점수</th> */}
                       <th>상세보기</th>
                     </tr>
                   </thead>
@@ -83,7 +83,7 @@ function DamanDashboard() {
                           <td>{supplier.name}</td>
                           <td>{supplier.businessNumber}</td>
                           <td>{supplier.mainItems}</td>
-                          <td>{supplier.rating}/5.0</td>
+                          {/* <td>{supplier.rating}/5.0</td> */}
                           <td>
                             <Link to={`/demand/supplier/${supplier.businessNumber}`} className="btn btn-sm btn-outline-primary">보기</Link>
                           </td>
@@ -185,7 +185,7 @@ function DamanDashboard() {
           {/* 5. 거래 이력 및 후기 작성 */}
           <div className="card shadow-sm mb-4">
             <div className="card-header bg-white d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">거래 이력 및 후기 작성</h5>
+              <h5 className="mb-0">거래 이력성</h5>
               <Link to="/demand/history" className="btn btn-outline-primary btn-sm">상세보기</Link>
             </div>
             <div className="card-body">
@@ -198,7 +198,7 @@ function DamanDashboard() {
                       <th>품목</th>
                       <th>계약금액</th>
                       <th>완료일</th>
-                      <th>후기작성</th>
+                      {/* <th>후기작성</th> */}
                     </tr>
                   </thead>
                   <tbody>
@@ -210,11 +210,11 @@ function DamanDashboard() {
                           <td>{history.item}</td>
                           <td>{history.amount}</td>
                           <td>{history.completionDate}</td>
-                          <td>
+                          {/* <td>
                             <button className={`btn btn-sm ${history.hasReview ? 'btn-secondary' : 'btn-outline-primary'}`} disabled={history.hasReview}>
                               {history.hasReview ? '작성완료' : '작성하기'}
                             </button>
-                          </td>
+                          </td> */}
                         </tr>
                       ) : (
                         <tr key={`empty-history-${idx}`}>
