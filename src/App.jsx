@@ -14,6 +14,9 @@ import EstimateSheet from './pages/estimate/estimateSheet'
 import EstimateDetail from './pages/estimate/estimateDetail'
 import ReceivedProposalDetail from './pages/estimate/receivedProposalDetail'
 import Contracts from './pages/contract/contracts'
+import HistoryList from './pages/history/historyList'
+import HistoryDetail from './pages/history/historyDetail'
+import MatchingPage from './pages/demand/matching/matchingPage'
 import DemandNavbar from './components/DemandNavbar'
 import Footer from './components/Footer'
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -48,11 +51,14 @@ function App() {
         <Route path="/demand" element={<CommonLayout><DamanDashboard /></CommonLayout>} />
         <Route path="/demand/supplier/:businessNumber" element={<CommonLayout><SupplierDetail /></CommonLayout>} />
         <Route path="/demand/suppliersList" element={<CommonLayout><SuppliersList /></CommonLayout>} />
+        <Route path="/demand/matching" element={<CommonLayout><MatchingPage /></CommonLayout>} />
         <Route path="/estimateList" element={<CommonLayout><EstimateList /></CommonLayout>} />
         <Route path="/estimateSheet" element={<CommonLayout><EstimateSheet /></CommonLayout>} />
         <Route path="/estimateDetail/:id" element={<CommonLayout><EstimateDetail /></CommonLayout>} />
         <Route path="/received-proposals/:id" element={<CommonLayout><ReceivedProposalDetail /></CommonLayout>} />
         <Route path="/contracts" element={<CommonLayout><Contracts /></CommonLayout>} />
+        <Route path="/history" element={<CommonLayout><HistoryList /></CommonLayout>} />
+        <Route path="/historyDetail/:id" element={<CommonLayout><HistoryDetail /></CommonLayout>} />
       </Routes>
     </BrowserRouter>
   )
