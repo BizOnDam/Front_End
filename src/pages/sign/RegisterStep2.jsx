@@ -1,7 +1,7 @@
 // src/pages/sign/RegisterStep2.jsx
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
-// import { processRegisterStep2 } from './processRegisterStep2';
+import { useState, useEffect } from 'react';
+import { processRegisterStep2 } from './processRegisterStep2';
 import RegisterStep3 from './RegisterStep3';
 import SignNavbar from '../../components/SignNavbar';
 import Footer from '../../components/Footer';
@@ -10,42 +10,71 @@ function RegisterStep2() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
+  // 다음 주소 검색 API 스크립트 로드
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = '//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   const [form, setForm] = useState({
-    companyPhone: '',
-    companyFax: '',
-    companyEmail: '',
+    companyNameKr: state?.companyName || '',
+    companyNameEn: '',
+    ceoNameKr: state?.ceoName || '',
+    ceoNameEn: '',
+    startDate: state?.startDate || '',
+    businessNumber: state?.bizNumber || '',
+    phoneNumber: '',
+    faxNumber: '',
     postcode: '',
     address: '',
     addressDetail: '',
     businessType: '',
-    loginId: '',
-    loginPwd: '',
-    confirmPwd: '',
-    nameKr: '',
-    nameEn: '',
-    department: '',
-    position: '',
-    roleDesc: '',
-    phoneNumber: '',
-    email: '',
-    roleInCompany: 'STAFF',
-    authProvider: 'EMAIL',
-    agreeMarketingEmail: true,
-    agreeMarketingSms: true
-  });
+    });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
+    
+    // 전화번호와 팩스번호 입력 시 하이픈 추가
+    if (name === 'phoneNumber' || name === 'faxNumber') {
+      const number = value.replace(/[^0-9]/g, ''); // 숫자만 추출
+      let formattedNumber = '';
+      
+      if (number.length <= 2) {
+        formattedNumber = number;
+      } else if (number.length <= 6) {
+        formattedNumber = `${number.slice(0, 2)}-${number.slice(2)}`;
+      } else {
+        formattedNumber = `${number.slice(0, 2)}-${number.slice(2, 5)}-${number.slice(5, 9)}`;
+      }
+      
+      setForm(prev => ({
+        ...prev,
+        [name]: formattedNumber
+      }));
+    } else {
+      setForm(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
   };
 
   const handlePostcodeSearch = () => {
     new window.daum.Postcode({
-      oncomplete: function (data) {
-        let addr = data.address;
-        setForm((prev) => ({
+      oncomplete: function(data) {
+        // 도로명 주소 또는 지번 주소
+        let addr = data.roadAddress || data.jibunAddress;
+        
+        // 우편번호와 주소 정보를 해당 필드에 넣음
+        setForm(prev => ({
           ...prev,
           postcode: data.zonecode,
           address: addr
@@ -56,10 +85,16 @@ function RegisterStep2() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/RegisterStep3', { state: form });
-    // await processRegisterStep2(form, setError, setLoading, (data) => {
-    //   navigate('/sign/RegisterStep3', { state: data });
-    // });
+    await processRegisterStep2(form, setError, setLoading, (response) => {
+      if (response.success) {
+        navigate('/RegisterStep3', { 
+          state: { 
+            companyId: response.data.companyId,
+            ...response.data
+          } 
+        });
+      }
+    });
   };
 
   return (
@@ -85,28 +120,6 @@ function RegisterStep2() {
                   <input type="text" className="form-control bg-light" value={state?.bizNumber || ''} readOnly />
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label">회사명(한글) <span className="text-danger">*</span></label>
-                  <input type="text" className="form-control bg-light" value={state?.companyName || ''} readOnly />
-                </div>
-              </div>
-
-              <div className="row mb-3">
-                <div className="col-md-6">
-                  <label className="form-label">회사명(영문)</label>
-                  <input type="text" className="form-control" name="company_name_en" onChange={handleChange} />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label">대표자명(한글) <span className="text-danger">*</span></label>
-                  <input type="text" className="form-control bg-light" value={state?.ceoName || ''} readOnly />
-                </div>
-              </div>
-
-              <div className="row mb-3">
-                <div className="col-md-6">
-                  <label className="form-label">대표자명(영문)</label>
-                  <input type="text" className="form-control" name="ceo_name_en" onChange={handleChange} />
-                </div>
-                <div className="col-md-6">
                   <label className="form-label">개업일 <span className="text-danger">*</span></label>
                   <input type="text" className="form-control bg-light" value={state?.startDate || ''} readOnly />
                 </div>
@@ -114,28 +127,46 @@ function RegisterStep2() {
 
               <div className="row mb-3">
                 <div className="col-md-6">
-                  <label className="form-label">대표 전화번호 <span className="text-danger">*</span></label>
-                  <input type="text" className="form-control" name="phone_number" onChange={handleChange} />
+                  <label className="form-label">회사명(한글) <span className="text-danger">*</span></label>
+                  <input type="text" className="form-control bg-light" value={state?.companyName || ''} readOnly />
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label">팩스번호</label>
-                  <input type="text" className="form-control" name="fax_number" onChange={handleChange} />
+                  <label className="form-label">회사명(영문)</label>
+                  <input type="text" className="form-control" name="companyNameEn" onChange={handleChange} />
                 </div>
               </div>
 
               <div className="row mb-3">
                 <div className="col-md-6">
-                  <label className="form-label">업태/업종</label>
-                  <input type="text" className="form-control" name="business_type" onChange={handleChange} />
+                  <label className="form-label">대표자명(한글) <span className="text-danger">*</span></label>
+                  <input type="text" className="form-control bg-light" value={state?.ceoName || ''} readOnly />
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label">이메일</label>
-                  <input type="email" className="form-control" name="email" onChange={handleChange} />
+                  <label className="form-label">대표자명(영문)</label>
+                  <input type="text" className="form-control" name="ceoNameEn" onChange={handleChange} />
+                </div>
+              </div>
+
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label">대표 전화번호 <span className="text-danger">*</span></label>
+                  <input type="text" className="form-control" name="phoneNumber" onChange={handleChange} />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">팩스번호</label>
+                  <input type="text" className="form-control" name="faxNumber" onChange={handleChange} />
+                </div>
+              </div>
+
+              <div className="row mb-3">
+                <div className="col-md-6">
+                  <label className="form-label">업태/업종 <span className="text-danger">*</span></label>
+                  <input type="text" className="form-control" name="businessType" onChange={handleChange} />
                 </div>
               </div>
 
               <div className="mb-3">
-                <label className="form-label">우편번호</label>
+                <label className="form-label">우편번호 <span className="text-danger">*</span></label>
                 <div className="input-group">
                   <input type="text" className="form-control" name="postcode" value={form.postcode} onChange={handleChange} />
                   <button type="button" className="btn btn-outline-secondary" onClick={handlePostcodeSearch}>주소검색</button>
@@ -143,13 +174,13 @@ function RegisterStep2() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">주소</label>
+                <label className="form-label">주소 <span className="text-danger">*</span></label>
                 <input type="text" className="form-control" name="address" value={form.address} onChange={handleChange} />
               </div>
 
               <div className="mb-3">
                 <label className="form-label">상세주소</label>
-                <input type="text" className="form-control" name="address_detail" value={form.addressDetail} onChange={handleChange} />
+                <input type="text" className="form-control" name="addressDetail" value={form.addressDetail} onChange={handleChange} />
               </div>
 
               {error && <div className="alert alert-danger">{error}</div>}
