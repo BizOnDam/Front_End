@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockEstimateRequests } from '../../data/MockEstimateList';
-import { ESTIMATE_RESPONSE_STATUS } from '../../constants/estimateStatus';
+import { ESTIMATE_STATUS } from '../../constants/estimateStatus';
 
 function ReceivedProposalDetail() {
   const { id } = useParams();
@@ -72,8 +72,8 @@ function ReceivedProposalDetail() {
             <div className="col-md-6"><strong>수신일:</strong> {response.created_at || '-'}</div>
             <div className="col-md-6">
               <strong>상태:</strong>{' '}
-              <span className={`badge bg-${ESTIMATE_RESPONSE_STATUS[response.status]?.badgeColor || 'secondary'}`}>
-                {ESTIMATE_RESPONSE_STATUS[response.status]?.label || '-'}
+              <span className={`badge bg-${ESTIMATE_STATUS[response.status]?.badgeColor || 'secondary'}`}>
+                {ESTIMATE_STATUS[response.status]?.label || '-'}
               </span>
             </div>
           </div>

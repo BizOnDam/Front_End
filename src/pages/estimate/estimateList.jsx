@@ -2,7 +2,7 @@ import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link } from 'react-router-dom';
 import { mockEstimateRequests } from '../../data/MockEstimateList';
-import { ESTIMATE_REQUEST_STATUS } from '../../constants/estimateStatus';
+import { ESTIMATE_STATUS } from '../../constants/estimateStatus';
 
 function EstimateList() {
   const [estimates] = useState(mockEstimateRequests);
@@ -17,7 +17,7 @@ function EstimateList() {
         {/* 1. 미확인, 미승인된 견적 제안서 */}
         <div className="card shadow-sm mb-4">
           <div className="card-header bg-white">
-            <h5 className="mb-0">미처리된 견적 제안서</h5>
+            <h5 className="mb-0">진행중인 계약</h5>
           </div>
           <div className="card-body">
             <div className="table-responsive">
@@ -37,11 +37,11 @@ function EstimateList() {
                     <tr><td colSpan={6} className="text-center text-muted">수신된 제안서가 없습니다.</td></tr>
                   ) : (
                     estimates
-                      .filter(estimate => [1, 2, 3].includes(estimate.request.status))
+                      .filter(estimate => [1, 2].includes(estimate.request.status))
                       .map(estimate => {
                         const { request, response, items } = estimate;
-                        const { label, badgeColor } = ESTIMATE_REQUEST_STATUS[request.status] || { label: '-', badgeColor: 'secondary' };
-                        const showButton = request.status === 3;
+                        const { label, badgeColor, button } = ESTIMATE_STATUS[request.status] || { label: '-', badgeColor: 'secondary', button: false };
+                        const showButton = button && response;
 
                         return (
                           <tr key={request.request_id}>
@@ -57,11 +57,11 @@ function EstimateList() {
                             <td>
                               <div className="d-flex align-items-center">
                                 <span className={`badge bg-${badgeColor}`}>{label}</span>
-                              {showButton && (
-                                <Link to={`/received-proposals/${response.response_id}`} className={`btn btn-sm ms-2 btn-outline-warning`}>
-                                  확인/승인
-                                </Link>
-                              )}
+                                {showButton && (
+                                  <Link to={`/received-proposals/${response.response_id}`} className="btn btn-sm ms-2 btn-outline-warning">
+                                    확인/승인
+                                  </Link>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -77,7 +77,7 @@ function EstimateList() {
         {/* 2. 계약이 체결되었거나, 거절된 견적 제안서 내역*/}
         <div className="card shadow-sm mb-4">
           <div className="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">처리된 견적 제안서</h5>
+            <h5 className="mb-0">완료된 계약</h5>
           </div>
           <div className="card-body">
             <div className="table-responsive">
@@ -98,27 +98,27 @@ function EstimateList() {
                     <tr><td colSpan={7} className="text-center text-muted">발송 내역이 없습니다.</td></tr>
                   ) : (
                     estimates
-                      .filter(estimate => estimate.request.status === 4 || estimate.request.status === 5)
+                      .filter(estimate => [3, 4].includes(estimate.request.status))
                       .map(estimate => {
-                        const { request, contract, items } = estimate;
-                        const { label, badgeColor } = ESTIMATE_REQUEST_STATUS[request.status] || { label: '-', badgeColor: 'secondary' };
+                        const { request, contract = {}, items = [] } = estimate;
+                        const { label, badgeColor } = ESTIMATE_STATUS[request.status] || { label: '-', badgeColor: 'secondary' };
 
                         return (
                           <tr key={request.request_id}>
-                            <td>{request.status === 4 ? contract.contract_id : '-'}</td>
+                            <td>{request.status === 3 ? contract?.contract_id || '-' : '-'}</td>
                             <td>{request.request_id}</td>
-                            <td>공급기업 {request.status === 4 ? contract.supplier_company_id : request.supplier_id}</td>
+                            <td>공급기업 {request.status === 3 ? contract?.supplier_company_id || request.supplier_id : request.supplier_id}</td>
                             <td>
                               {items.map(item => item.detail_category_name).join(', ').length > 10 
                                 ? items.map(item => item.detail_category_name).join(', ').substring(0, 10) + '...'
                                 : items.map(item => item.detail_category_name).join(', ')}
                             </td>
                             <td>
-                              {request.status === 4 ? (
-                                estimate.response_items.reduce((sum, item) => sum + item.unit_price, 0).toLocaleString() + '원'
+                              {request.status === 3 ? (
+                                estimate.response_items?.reduce((sum, item) => sum + (item.unit_price || 0), 0).toLocaleString() + '원'
                               ) : '-'}
                             </td>
-                            <td>{request.status === 4 ? contract.created_at : '-'}</td>
+                            <td>{request.status === 3 ? contract?.created_at || '-' : '-'}</td>
                             <td>
                               <div className="d-flex justify-content-between align-items-center">
                                 <span className={`badge bg-${badgeColor}`}>{label}</span>

@@ -1,14 +1,14 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockEstimateRequests } from '../../data/MockEstimateList';
-import { ESTIMATE_REQUEST_STATUS, ESTIMATE_RESPONSE_STATUS } from '../../constants/estimateStatus';
+import { ESTIMATE_STATUS } from '../../constants/estimateStatus';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const EstimateDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const estimate = mockEstimateRequests.find(est => est.request.request_id === parseInt(id));
-  const { request, items, response, response_items } = estimate || {};
+  const { request, items = [], response, response_items = [] } = estimate || {};
 
   if (!estimate) {
     return (
@@ -39,18 +39,20 @@ const EstimateDetail = () => {
           <div className="card-body">
             <div className="row mb-2">
               <div className="col-md-6">
-                <strong>상태:</strong> <span className={`badge bg-${ESTIMATE_REQUEST_STATUS[request.status].badgeColor}`}>{ESTIMATE_REQUEST_STATUS[request.status].label}</span>
+                <strong>상태:</strong> <span className={`badge bg-${ESTIMATE_STATUS[request.status]?.badgeColor || 'secondary'}`}>
+                  {ESTIMATE_STATUS[request.status]?.label || '-'}
+                </span>
               </div>
               <div className="col-md-6">
-                <strong>납품 기한:</strong> {request.due_date}
+                <strong>납품 기한:</strong> {request.due_date || '-'}
               </div>
             </div>
             <div className="row mb-2">
               <div className="col-md-6">
-                <strong>생성일시:</strong> {request.created_at}
+                <strong>생성일시:</strong> {request.created_at || '-'}
               </div>
               <div className="col-md-6">
-                <strong>상세 설명:</strong> {request.detail}
+                <strong>상세 설명:</strong> {request.detail || '-'}
               </div>
             </div>
           </div>
@@ -73,14 +75,20 @@ const EstimateDetail = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => (
-                    <tr key={item.item_id}>
-                      <td>{item.category_name}</td>
-                      <td>{item.detail_category_name}</td>
-                      <td>{item.quantity}</td>
-                      <td className="text-end">{item.specification}</td>
+                  {items.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center">품목 정보가 없습니다.</td>
                     </tr>
-                  ))}
+                  ) : (
+                    items.map((item) => (
+                      <tr key={item.item_id}>
+                        <td>{item.category_name || '-'}</td>
+                        <td>{item.detail_category_name || '-'}</td>
+                        <td>{item.quantity || '-'}</td>
+                        <td className="text-end">{item.specification || '-'}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -97,10 +105,12 @@ const EstimateDetail = () => {
               <div className="card-body">
                 <div className="row mb-2">
                   <div className="col-md-6">
-                    <strong>응답 ID:</strong> {response.response_id}
+                    <strong>응답 ID:</strong> {response.response_id || '-'}
                   </div>
                   <div className="col-md-6">
-                    <strong>상태:</strong> <span className={`badge bg-${ESTIMATE_RESPONSE_STATUS[response.status].badgeColor}`}>{ESTIMATE_RESPONSE_STATUS[response.status].label}</span>
+                    <strong>상태:</strong> <span className={`badge bg-${ESTIMATE_STATUS[response.status]?.badgeColor || 'secondary'}`}>
+                      {ESTIMATE_STATUS[response.status]?.label || '-'}
+                    </span>
                   </div>
                 </div>
                 <div className="row mb-2">
@@ -142,24 +152,30 @@ const EstimateDetail = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {response_items?.map((responseItem) => {
-                        const requestItem = items.find(
-                          (item) => item.item_id === responseItem.item_id
-                        );
-                        return (
-                          <tr key={responseItem.response_item_id}>
-                            <td>{requestItem?.category_name || '-'}</td>
-                            <td>{requestItem?.detail_category_name || '-'}</td>
-                            <td className="text-end">
-                              {responseItem.unit_price ? new Intl.NumberFormat('ko-KR', {
-                                style: 'currency',
-                                currency: 'KRW'
-                              }).format(responseItem.unit_price) : '-'}
-                            </td>
-                            <td className="text-end">{responseItem.delivery_days ? `${responseItem.delivery_days}일` : '-'}</td>
-                          </tr>
-                        );
-                      })}
+                      {response_items.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="text-center">응답 품목 정보가 없습니다.</td>
+                        </tr>
+                      ) : (
+                        response_items.map((responseItem) => {
+                          const requestItem = items.find(
+                            (item) => item.item_id === responseItem.item_id
+                          );
+                          return (
+                            <tr key={responseItem.response_item_id}>
+                              <td>{requestItem?.category_name || '-'}</td>
+                              <td>{requestItem?.detail_category_name || '-'}</td>
+                              <td className="text-end">
+                                {responseItem.unit_price ? new Intl.NumberFormat('ko-KR', {
+                                  style: 'currency',
+                                  currency: 'KRW'
+                                }).format(responseItem.unit_price) : '-'}
+                              </td>
+                              <td className="text-end">{responseItem.delivery_days ? `${responseItem.delivery_days}일` : '-'}</td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
