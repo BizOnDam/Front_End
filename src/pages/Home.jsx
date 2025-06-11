@@ -8,11 +8,11 @@ function Home() {
 
   useEffect(() => {
     // TODO: 실제 로그인 상태 확인 로직 구현
-    // setUser(null);
-    setUser({
-      username: 'yungga',
-      role: 'USER'
-    }); // 임시로 yungga 사용자로 설정
+    setUser(null);
+    // setUser({
+    //   username: 'yungga',
+    //   role: 'USER'
+    // }); // 임시로 yungga 사용자로 설정
   }, []);
 
   // 로그인하지 않은 경우의 홈 화면

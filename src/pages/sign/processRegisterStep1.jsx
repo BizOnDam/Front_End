@@ -34,23 +34,46 @@ export async function process(form, setError, setLoading, onSuccess) {
   setLoading(true);
   try {
     const payload = {
-      bizNumber: form.bizNumber,
-      startDate: date8,
-      ceoName: form.ceoName,
-      companyName: form.companyName,
+      b_no: form.bizNumber,
+      start_dt: date8,
+      p_nm: form.ceoName,
+      b_nm: form.companyName,
     };
-    // TODO: API URL 변경
-    const res = await fetch('/api/companies/validate', {
+    
+    const res = await fetch('http://localhost:8082/company-service/api/companies/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    
     if (!res.ok) throw new Error('서버 오류가 발생했습니다.');
     const data = await res.json();
-    if (data.success) {
-      onSuccess(data);
-    } else {
-      setError(data.message || '인증에 실패했습니다.');
+    
+    if (!data.validBusinessNumber) {
+      setError('사업자정보를 다시 확인해 주세요.');
+      return;
+    }
+
+    if (data.validBusinessNumber && data.alreadyRegistered) {
+      onSuccess({ 
+        success: true, 
+        redirectTo: 'RegisterStep3',
+        data: { 
+          bizNumber: form.bizNumber,
+          startDate: form.startDate,
+          ceoName: form.ceoName,
+          companyName: form.companyName,
+          companyId: data.companyId 
+        },
+        message: data.message
+      });
+    } else if (data.validBusinessNumber && !data.alreadyRegistered) {
+      onSuccess({ 
+        success: true, 
+        redirectTo: 'RegisterStep2',
+        data: form,
+        message: data.message
+      });
     }
   } catch (err) {
     setError(err.message || '네트워크 오류가 발생했습니다.');
@@ -58,15 +81,3 @@ export async function process(form, setError, setLoading, onSuccess) {
     setLoading(false);
   }
 }
-
-// RegisterStep1process.propTypes = {
-//   form: PropTypes.shape({
-//     bizNumber: PropTypes.string.isRequired,
-//     startDate: PropTypes.string.isRequired,
-//     ceoName: PropTypes.string.isRequired,
-//     companyName: PropTypes.string.isRequired,
-//   }).isRequired,
-//   setError: PropTypes.func.isRequired,
-//   setLoading: PropTypes.func.isRequired,
-//   onSuccess: PropTypes.func.isRequired,
-// }; 

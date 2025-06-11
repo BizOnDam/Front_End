@@ -3,8 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import profileImg from '../../assets/profile.png';
-// import { process as processRegisterStep1 } from './processRegisterStep1';
-import RegisterStep2 from './RegisterStep2';
+import { process as processRegisterStep1 } from './processRegisterStep1';
 import SignNavbar from '../../components/SignNavbar';
 import Footer from '../../components/Footer';
 
@@ -18,7 +17,7 @@ function RegisterStep1() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [error, setError] = useState('');
-  // const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // 전체 동의 체크박스 상태는 개별 동의 상태로부터 유도
@@ -49,15 +48,36 @@ function RegisterStep1() {
       setError('이용약관 및 개인정보 수집에 동의해 주세요.');
       return;
     }
-    // 실제 API 연동 전이므로, 무조건 성공 처리
-    navigate('/RegisterStep2', { state: form });
-    // await processRegisterStep1(form, setError, setLoading, (result) => {
-    //       if (result?.success) {
-    //         navigate('/RegisterStep2', { state: form });
-    //       } else {
-    //         setError(result?.message || '인증에 실패했습니다.');
-    //       }
-    //     });
+    
+    await processRegisterStep1(form, setError, setLoading, (result) => {
+      if (result?.success) {
+        console.log('페이지 이동 데이터:', {
+          redirectTo: result.redirectTo,
+          data: result.data,
+          message: result.message
+        });
+        
+        if (result.redirectTo === 'RegisterStep3') {
+          navigate('/RegisterStep3', { 
+            state: { 
+              bizNumber: result.data.bizNumber,
+              startDate: result.data.startDate,
+              ceoName: result.data.ceoName,
+              companyName: result.data.companyName,
+              companyId: result.data.companyId,
+              message: result.message 
+            } 
+          });
+        } else {
+          navigate('/RegisterStep2', { 
+            state: { 
+              ...result.data,
+              message: result.message 
+            } 
+          });
+        }
+      }
+    });
   };
 
   return (
@@ -116,7 +136,7 @@ function RegisterStep1() {
           {/* 사업자 인증 입력 영역 */}
           <div className="bg-white rounded shadow-sm p-4 mb-4">
             <h4 className="mb-4 text-center">사업자 인증</h4>
-            {/* {loading && <div className="text-center my-2">로딩 중...</div>} */}
+            {loading && <div className="text-center my-2">로딩 중...</div>}
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
                 <label className="form-label">사업자등록번호</label>
