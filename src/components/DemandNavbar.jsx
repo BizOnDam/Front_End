@@ -8,7 +8,7 @@ function DemandNavbar({ active }) {
     { name: '공급기업조회', path: '/demand/suppliersList' },
     { name: '견적관리', path: '/estimateList' },
     { name: '계약/납품 일정', path: '/contracts' },
-    { name: '거래이력', path: '/history' },
+    { name: '회사거래이력', path: '/history' },
   ];
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4">
