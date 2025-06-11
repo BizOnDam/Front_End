@@ -1,34 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Home from './pages/home'
+import Login from './pages/sign/login'
+import RegisterStep1 from './pages/sign/RegisterStep1'
+import RegisterStep2 from './pages/sign/RegisterStep2'
+import RegisterStep3 from './pages/sign/RegisterStep3'
+import RegisterStep4 from './pages/sign/RegisterStep4'
+import DamanDashboard from './pages/demand/damanDashboard'
+import SupplierDetail from './pages/demand/supplierDetail'
+import SuppliersList from './pages/demand/suppliersList'
+import EstimateList from './pages/estimate/estimateList'
+import EstimateSheet from './pages/estimate/estimateSheet'
+import EstimateDetail from './pages/estimate/estimateDetail'
+import ReceivedProposalDetail from './pages/estimate/receivedProposalDetail'
+import Contracts from './pages/contract/contracts'
+import HistoryList from './pages/history/historyList'
+import HistoryDetail from './pages/history/historyDetail'
+import MatchingPage from './pages/demand/matching/matchingPage'
+import DemandNavbar from './components/DemandNavbar'
+import Footer from './components/Footer'
+import 'bootstrap/dist/css/bootstrap.min.css'
+
+const Supplier = () => <div>공급업체 메인(임시)</div>;
+
+// 공통 레이아웃 컴포넌트
+const CommonLayout = ({ children }) => {
+  return (
+    <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <DemandNavbar />
+      <div className="container py-4" style={{ flex: 1 }}>
+        {children}
+      </div>
+      <Footer />
+    </div>
+  );
+};
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/RegisterStep1" element={<RegisterStep1 />} />
+        <Route path="/RegisterStep2" element={<RegisterStep2 />} />
+        <Route path="/RegisterStep3" element={<RegisterStep3 />} />
+        <Route path="/RegisterStep4" element={<RegisterStep4 />} />
+        <Route path="/supplier" element={<Supplier />} />
+        {/* TODO 함수로 바꾸기, path 수정하기 */}
+        <Route path="/demand" element={<CommonLayout><DamanDashboard /></CommonLayout>} />
+        <Route path="/demand/supplier/:businessNumber" element={<CommonLayout><SupplierDetail /></CommonLayout>} />
+        <Route path="/demand/suppliersList" element={<CommonLayout><SuppliersList /></CommonLayout>} />
+        <Route path="/demand/matching" element={<CommonLayout><MatchingPage /></CommonLayout>} />
+        <Route path="/estimateList" element={<CommonLayout><EstimateList /></CommonLayout>} />
+        <Route path="/estimateSheet" element={<CommonLayout><EstimateSheet /></CommonLayout>} />
+        <Route path="/estimateDetail/:id" element={<CommonLayout><EstimateDetail /></CommonLayout>} />
+        <Route path="/received-proposals/:id" element={<CommonLayout><ReceivedProposalDetail /></CommonLayout>} />
+        <Route path="/contracts" element={<CommonLayout><Contracts /></CommonLayout>} />
+        <Route path="/history" element={<CommonLayout><HistoryList /></CommonLayout>} />
+        <Route path="/historyDetail/:id" element={<CommonLayout><HistoryDetail /></CommonLayout>} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
