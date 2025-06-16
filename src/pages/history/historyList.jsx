@@ -38,7 +38,7 @@ const HistoryList = () => {
     if (contractId) {
       navigate(`/historyDetail/${contractId}`);
     } else {
-      navigate(`/estimateDetail/${requestId}`);
+      navigate(`/estimate/${requestId}`);
     }
   };
 

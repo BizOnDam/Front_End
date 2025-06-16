@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-function DemandNavbar({ active }) {
+function DemandNavbar({ active, user }) {
   const location = useLocation();
   const menu = [
     { name: '대시보드', path: '/demand' },
@@ -12,21 +12,26 @@ function DemandNavbar({ active }) {
   ];
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm px-4">
-      <Link to="/" className="navbar-brand text-decoration-none">BizOnDam</Link>
-      <div className="collapse navbar-collapse">
-        <ul className="navbar-nav me-auto">
-          {menu.map((item) => (
-            <li className="nav-item" key={item.path}>
-              <Link
-                to={item.path}
-                className={`nav-link${(active === item.path || location.pathname === item.path) ? ' active fw-bold text-primary' : ''}`}
-              >
-                {item.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <button className="btn btn-primary">마이페이지</button>
+      <div className="container">
+        <Link to="/" className="navbar-brand text-decoration-none">BizOnDam</Link>
+        <div className="collapse navbar-collapse">
+          <ul className="navbar-nav me-auto">
+            {menu.map((item) => (
+              <li className="nav-item" key={item.path}>
+                <Link
+                  to={item.path}
+                  className={`nav-link${(active === item.path || location.pathname === item.path) ? ' active fw-bold text-primary' : ''}`}
+                >
+                  {item.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="d-flex align-items-center">
+            <span className="me-3">안녕하세요, {user.username}님</span>
+            <button className="btn btn-outline-primary">마이페이지</button>
+          </div>
+        </div>
       </div>
     </nav>
   );
