@@ -4,6 +4,7 @@ import { FaFileContract, FaFileDownload, FaTruck, FaChevronLeft, FaChevronRight 
 import 'react-calendar/dist/Calendar.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { mockEstimateRequests } from '../../data/MockEstimateList';
+import Pagination from './Pagination';
 
 // 달력 커스텀 스타일
 const calendarStyles = `
@@ -53,8 +54,7 @@ function Contracts() {
         events.push({
           type: '계약체결',
           title: `${contract.contract.supplier_company_id} - ${contract.items.map(item => item.detail_category_name).join(', ')}`,
-          date: contract.contract.created_at,
-          status: contract.contract.tracking_number ? '배송현황확인' : '배송 준비중'
+          date: contract.contract.created_at
         });
       }
 
@@ -62,8 +62,7 @@ function Contracts() {
         events.push({
           type: '납품기한',
           title: `${contract.contract.supplier_company_id} - ${contract.items.map(item => item.detail_category_name).join(', ')}`,
-          date: contract.request.due_date,
-          status: contract.contract.tracking_number ? '배송현황확인' : '배송 준비중'
+          date: contract.request.due_date
         });
       }
     });
@@ -89,24 +88,14 @@ function Contracts() {
   // 선택된 날짜의 이벤트 표시
   const selectedDateEvents = getEventsForDate(selectedDate);
 
-  const getStatusBadge = (contract) => {
-    if (!contract.contract) {
-      return null;
-    }
-    if (!contract.contract.tracking_number) {
-      return <span className="badge bg-warning">배송 준비중</span>;
-    }
-    return <span className="badge bg-info">배송현황확인</span>;
-  };
-
   const handleViewContract = (contractId) => {
     // TODO 전자계약 보기 기능 구현
     console.log('View contract:', contractId);
   };
 
-  const handleDownloadOrder = (contractId) => {
-    // TODO 발주서 다운로드 기능 구현
-    console.log('Download order:', contractId);
+  const handleDownloadContract = (contractId) => {
+    // TODO 계약서 다운로드 기능 구현
+    console.log('Download contract:', contractId);
   };
 
   const handleViewDetail = (contract) => {
@@ -175,7 +164,6 @@ function Contracts() {
                               </span>
                               <span>{event.title}</span>
                             </div>
-                            <small className="text-muted d-block mt-1">상태: {getStatusBadge(event.status)}</small>
                           </li>
                         ))}
                       </ul>
@@ -200,7 +188,6 @@ function Contracts() {
                     <th>계약금액</th>
                     <th>계약체결일</th>
                     <th>납품기한</th>
-                    <th>배송상태</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -221,7 +208,6 @@ function Contracts() {
                       </td>
                       <td>{contract.contract.created_at.split(' ')[0]}</td>
                       <td>{contract.request.due_date}</td>
-                      <td>{getStatusBadge(contract)}</td>
                       <td>
                         <div className="btn-group">
                           <button 
@@ -240,40 +226,11 @@ function Contracts() {
 
             {/* 페이지네이션 */}
             {totalPages > 1 && (
-              <div className="d-flex justify-content-center mt-4">
-                <nav aria-label="Page navigation">
-                  <ul className="pagination">
-                    <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                      <button 
-                        className="page-link" 
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                      >
-                        <FaChevronLeft />
-                      </button>
-                    </li>
-                    {[...Array(totalPages)].map((_, index) => (
-                      <li key={index + 1} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                        <button 
-                          className="page-link"
-                          onClick={() => handlePageChange(index + 1)}
-                        >
-                          {index + 1}
-                        </button>
-                      </li>
-                    ))}
-                    <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                      <button 
-                        className="page-link"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                      >
-                        <FaChevronRight />
-                      </button>
-                    </li>
-                  </ul>
-                </nav>
-              </div>
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
             )}
           </div>
         </div>
@@ -320,14 +277,6 @@ function Contracts() {
                       <h6>계약 정보</h6>
                       <table className="table table-sm">
                         <tbody>
-                          <tr>
-                            <th>배송상태</th>
-                            <td>{getStatusBadge(selectedContract)}</td>
-                          </tr>
-                          <tr>
-                            <th>운송장번호</th>
-                            <td>{selectedContract.contract.tracking_number || '-'}</td>
-                          </tr>
                           <tr>
                             <th>결제조건</th>
                             <td>{selectedContract.contract.payment_terms}</td>
@@ -381,21 +330,11 @@ function Contracts() {
                   <button 
                     type="button" 
                     className="btn btn-success"
-                    onClick={() => handleDownloadOrder(selectedContract.contract.contract_id)}
+                    onClick={() => handleDownloadContract(selectedContract.contract.contract_id)}
                   >
                     <FaFileDownload className="me-2" />
-                    발주서 다운로드
+                    계약서 다운로드
                   </button>
-                  {selectedContract.contract.tracking_number && (
-                    <button 
-                      type="button" 
-                      className="btn btn-info"
-                      onClick={() => window.open(`https://tracking.example.com/${selectedContract.contract.tracking_number}`, '_blank')}
-                    >
-                      <FaTruck className="me-2" />
-                      배송추적
-                    </button>
-                  )}
                   <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
                     닫기
                   </button>
