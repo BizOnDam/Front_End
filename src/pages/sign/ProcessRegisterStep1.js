@@ -1,13 +1,4 @@
-import PropTypes from 'prop-types';
-
-/**
- * 사업자 인증 유효성 검사 및 API 호출 함수
- * @param {object} form - { bizNumber, startDate, ceoName, companyName }
- * @param {function} setError - 에러 메시지 설정 함수
- * @param {function} setLoading - 로딩 상태 설정 함수
- * @param {function} onSuccess - 성공 콜백
- */
-export async function process(form, setError, setLoading, onSuccess) {
+export async function ProcessRegisterStep1(form, setError, setLoading, onSuccess) {
   // 유효성 검사
   if (!/^\d{10}$/.test(form.bizNumber)) {
     setError('사업자등록번호는 10자리 숫자여야 합니다.');

@@ -1,11 +1,18 @@
 // src/pages/RegisterStep1.jsx
 import { useState } from 'react';
+import { ProcessRegisterStep1 } from './ProcessRegisterStep1';
 import { Link, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { registerLocale } from 'react-datepicker';
+import ko from 'date-fns/locale/ko';
 import profileImg from '../../assets/profile.png';
-import { process as processRegisterStep1 } from './processRegisterStep1';
 import SignNavbar from '../../components/SignNavbar';
 import Footer from '../../components/Footer';
+
+// 한국어 로케일 등록
+registerLocale('ko', ko);
 
 function RegisterStep1() {
   const [form, setForm] = useState({
@@ -14,6 +21,7 @@ function RegisterStep1() {
     ceoName: '',
     companyName: '',
   });
+  const [selectedDate, setSelectedDate] = useState(null);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [error, setError] = useState('');
@@ -41,6 +49,18 @@ function RegisterStep1() {
     setAgreePrivacy(checked);
   };
 
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    if (date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      setForm({ ...form, startDate: `${year}${month}${day}` });
+    } else {
+      setForm({ ...form, startDate: '' });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -49,7 +69,7 @@ function RegisterStep1() {
       return;
     }
     
-    await processRegisterStep1(form, setError, setLoading, (result) => {
+    await ProcessRegisterStep1(form, setError, setLoading, (result) => {
       if (result?.success) {
         console.log('페이지 이동 데이터:', {
           redirectTo: result.redirectTo,
@@ -138,53 +158,63 @@ function RegisterStep1() {
             <h4 className="mb-4 text-center">사업자 인증</h4>
             {loading && <div className="text-center my-2">로딩 중...</div>}
             <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label className="form-label">사업자등록번호</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="bizNumber"
-                  value={form.bizNumber}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, ''); // 숫자만 남기기
-                    setForm({ ...form, bizNumber: value });
-                  }}
-                  placeholder="숫자만 입력 (예: 1234567890)"
-                  required
-                />
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <label className="form-label d-block mb-2">사업자등록번호</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="bizNumber"
+                    value={form.bizNumber}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      setForm({ ...form, bizNumber: value });
+                    }}
+                    placeholder="숫자만 입력 (예: 1234567890)"
+                    required
+                  />
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label className="form-label d-block mb-2">개업일자</label>
+                  <DatePicker
+                    selected={selectedDate}
+                    onChange={handleDateChange}
+                    dateFormat="yyyy/MM/dd"
+                    className="form-control"
+                    placeholderText="개업일자를 선택하세요"
+                    maxDate={new Date()}
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    locale="ko"
+                    formatMonthYear={(date) => `${date.getMonth() + 1}월`}
+                    required
+                  />
+                </div>
               </div>
-              <div className="mb-3">
-                <label className="form-label">개업일자</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  name="startDate"
-                  value={form.startDate}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">대표자명</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="ceoName"
-                  value={form.ceoName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">기업명</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  name="companyName"
-                  value={form.companyName}
-                  onChange={handleChange}
-                  required
-                />
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <label className="form-label d-block mb-2">대표자명</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="ceoName"
+                    value={form.ceoName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label className="form-label d-block mb-2">기업명</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="companyName"
+                    value={form.companyName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </div>
               {error && <div className="alert alert-danger">{error}</div>}
               <div className="d-flex justify-content-center">
