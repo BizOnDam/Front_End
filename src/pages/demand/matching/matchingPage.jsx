@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Card, Table, Badge, Button, Spinner } from 'react-bootstrap';
-import processMatchingData from './processMatchingPage';
+import processMatchingData from './ProcessMatchingPage';
 
 const MatchingPage = () => {
   const navigate = useNavigate();
@@ -16,12 +16,11 @@ const MatchingPage = () => {
     const fetchMatchingData = async () => {
       try {
         setLoading(true);
-        // const response = await axios.get(`http://localhost:8080/api/recommend/${requestId}`);
-        const response = await axios.get(`http://localhost:8080/api/recommend/3`);
-        console.log('API Response:', response.data); // API 응답 데이터 확인
+        const response = await axios.get(`/api/recommend/${requestId}`);
+        console.log('API Response:', response.data.data); // API 응답 데이터 확인
         
         // API 응답 데이터 구조 확인 및 변환
-        const apiData = response.data;
+        const apiData = response.data.data;
         if (apiData) {
           // API 응답 데이터를 processMatchingData가 기대하는 형식으로 변환
           const formattedData = {
@@ -37,23 +36,48 @@ const MatchingPage = () => {
         }
       } catch (err) {
         console.error('매칭 데이터 조회 중 오류:', err);
-        setError(err.response?.data?.message || '데이터를 불러오는 중 오류가 발생했습니다.');
+        if (err.response) {
+          // 서버가 응답을 반환한 경우
+          console.error('Error response:', err.response.data);
+          setError(err.response.data.message || '데이터를 불러오는 중 오류가 발생했습니다.');
+        } else if (err.request) {
+          // 요청이 전송되었지만 응답을 받지 못한 경우
+          console.error('Error request:', err.request);
+          setError('서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
+        } else {
+          // 요청 설정 중 오류가 발생한 경우
+          console.error('Error message:', err.message);
+          setError('요청을 처리하는 중 오류가 발생했습니다.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMatchingData();
+    if (requestId) {
+      fetchMatchingData();
+    } else {
+      setError('요청 ID가 없습니다.');
+      setLoading(false);
+    }
   }, [requestId]);
 
   // 기업 선택 후 다음 페이지로
-  const handleCompanySelect = (companyName, businessNumber) => {
-    navigate('/estimateSheet', { 
-      state: { 
-        selectedCompany: companyName,
-        businessNumber: businessNumber
+  const handleCompanySelect = async (companyName, businessNumber) => {
+    try {
+      const response = await axios.patch(`http://localhost:8083/api/estimates/${requestId}/assign-supplier`, 
+      null,
+      { params: { businessNumber: businessNumber } }
+    );
+
+      if (response.data.success) {
+        alert(`${companyName}에 견적 요청이 발송되었습니다!`);
+        navigate('/estimateList');
       }
-    });
+    } catch (error) {
+      console.error('견적 요청 발송 중 오류:', error);
+      alert('견적 요청 발송 중 오류가 발생했습니다.');
+    }
   };
 
   if (loading) {

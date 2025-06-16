@@ -1,8 +1,7 @@
 // src/pages/sign/RegisterStep2.jsx
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { processRegisterStep2 } from './processRegisterStep2';
-import RegisterStep3 from './RegisterStep3';
+import { ProcessRegisterStep2 } from './ProcessRegisterStep2';
 import SignNavbar from '../../components/SignNavbar';
 import Footer from '../../components/Footer';
 
@@ -85,7 +84,7 @@ function RegisterStep2() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await processRegisterStep2(form, setError, setLoading, (response) => {
+    await ProcessRegisterStep2(form, setError, setLoading, (response) => {
       if (response.success) {
         navigate('/RegisterStep3', { 
           state: { 

@@ -1,11 +1,4 @@
-/**
- * 기업정보 저장 및 유효성 검사, API 호출 함수
- * @param {object} form - 기업정보 입력값
- * @param {function} setError - 에러 메시지 설정 함수
- * @param {function} setLoading - 로딩 상태 설정 함수
- * @param {function} onSuccess - 성공 콜백 (data => void)
- */
-export async function processRegisterStep2(form, setError, setLoading, onSuccess) {
+export async function ProcessRegisterStep2(form, setError, setLoading, onSuccess) {
   setError('');
 
   // 필수 입력값 유효성 검사
