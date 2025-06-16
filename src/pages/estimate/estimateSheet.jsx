@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {
-  categories,
+  useCategoryData,
   createInitialItem,
   handleCategoryChange,
   handleDetailCategoryChange,
@@ -9,27 +10,50 @@ import {
   addItem,
   removeItem,
   handleSubmit
-} from './processEstimateSheet';
+} from './ProcessEstimateSheet';
 
-function EstimateSheet() {
+function EstimateSheet({ user }) {
+  const navigate = useNavigate();
+
   const [items, setItems] = useState([createInitialItem(1)]);
-  const [form, setForm] = useState({
-    due_date: '',
-    detail: ''
-  });
+  const [form, setForm] = useState({ due_date: '', detail: '' });
   const [selectedDetailCategories, setSelectedDetailCategories] = useState({});
+  const [error, setError] = useState('');
+
+  const { categories, loading } = useCategoryData(setError);
 
   const handleFormChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
+
+  const onSuccess = (requestId) => {
+    navigate(`/demand/matching/${requestId}`);
+  };
+
+  if (loading) {
+    return (
+      <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh' }}>
+        <div className="container py-4">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh' }}>
       <div className="container py-4">
         <h2 className="mb-4">견적 요청서 작성</h2>
+
+        {error && <div className="alert alert-danger">{error}</div>}
+
         <div className="card shadow-sm mb-4">
           <div className="card-body">
-            <form onSubmit={(e) => handleSubmit(e, items, form)}>
+            <form onSubmit={(e) => handleSubmit(e, items, form, setError, onSuccess, user)}>
               {items.map((item, index) => (
                 <div key={item.id} className="border rounded p-3 mb-3">
                   <div className="d-flex justify-content-between align-items-center mb-3">
@@ -50,14 +74,23 @@ function EstimateSheet() {
                       <label className="form-label">품명</label>
                       <select 
                         className="form-select" 
-                        value={item.category_code} 
-                        onChange={(e) => handleCategoryChange(item.id, e.target.value, items, setItems, setSelectedDetailCategories)}
+                        value={item.category_name} 
+                        onChange={(e) =>
+                          handleCategoryChange(
+                            item.id,
+                            e.target.value,
+                            items,
+                            setItems,
+                            setSelectedDetailCategories,
+                            setError
+                          )
+                        }
                         required
                       >
                         <option value="">품명을 선택하세요</option>
-                        {categories.map(category => (
-                          <option key={category.code} value={category.code}>
-                            {category.name}
+                        {Array.isArray(categories) && categories.map((categoryName) => (
+                          <option key={categoryName} value={categoryName}>
+                            {categoryName}
                           </option>
                         ))}
                       </select>
@@ -67,17 +100,27 @@ function EstimateSheet() {
                       <label className="form-label">세부품명</label>
                       <select 
                         className="form-select" 
-                        value={item.detail_category_code} 
-                        onChange={(e) => handleDetailCategoryChange(item.id, e.target.value, items, setItems, selectedDetailCategories)}
+                        value={item.detail_category_name} 
+                        onChange={(e) =>
+                          handleDetailCategoryChange(
+                            item.id,
+                            e.target.value,
+                            items,
+                            setItems,
+                            selectedDetailCategories
+                          )
+                        }
                         required
-                        disabled={!item.category_code}
+                        disabled={!item.category_name}
                       >
                         <option value="">세부품명을 선택하세요</option>
-                        {selectedDetailCategories[item.id]?.map(category => (
-                          <option key={category.code} value={category.code}>
-                            {category.name}
-                          </option>
-                        ))}
+                        {Array.isArray(selectedDetailCategories[item.id]) && 
+                          selectedDetailCategories[item.id].map(detail => (
+                            <option key={detail.productId} value={detail.detailCategoryName}>
+                              {detail.detailCategoryName}
+                            </option>
+                          ))
+                        }
                       </select>
                     </div>
 
@@ -87,23 +130,26 @@ function EstimateSheet() {
                         type="number" 
                         className="form-control" 
                         value={item.quantity} 
-                        onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value, items, setItems)}
+                        onChange={(e) =>
+                          handleItemChange(item.id, 'quantity', e.target.value, items, setItems)
+                        }
                         required 
                       />
                     </div>
-                    
+
                     <div className="col-md-6 mb-3">
                       <label className="form-label">품목 규격</label>
                       <input 
                         type="text" 
                         className="form-control" 
                         value={item.specification} 
-                        onChange={(e) => handleItemChange(item.id, 'specification', e.target.value, items, setItems)}
+                        onChange={(e) =>
+                          handleItemChange(item.id, 'specification', e.target.value, items, setItems)
+                        }
                         placeholder="예: 개, kg, m 등"
                         required 
                       />
                     </div>
-
                   </div>
                 </div>
               ))}
@@ -144,7 +190,9 @@ function EstimateSheet() {
               </div>
 
               <div className="d-flex justify-content-end">
-                <button className="btn btn-primary px-5" type="submit">견적 요청</button>
+                <button className="btn btn-primary px-5" type="submit">
+                  견적 요청
+                </button>
               </div>
             </form>
           </div>
@@ -154,4 +202,4 @@ function EstimateSheet() {
   );
 }
 
-export default EstimateSheet; 
+export default EstimateSheet;

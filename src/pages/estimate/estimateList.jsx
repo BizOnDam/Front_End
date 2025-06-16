@@ -1,11 +1,24 @@
-import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Link } from 'react-router-dom';
-import { mockEstimateRequests } from '../../data/MockEstimateList';
 import { ESTIMATE_STATUS } from '../../constants/estimateStatus';
+import { useEstimateData } from './ProcessEstimateList';
 
-function EstimateList() {
-  const [estimates] = useState(mockEstimateRequests);
+function EstimateList({ user }) {
+  console.log('▶ EstimateList user:', user);
+  
+  const { estimates, loading, error } = useEstimateData(user.companyId, user.role);
+
+  if (loading) return <div>로딩 중...</div>;
+  if (error) return <div>에러: {error}</div>;
+
+  // role에 따라 사용할 status 결정
+  const getStatus = (estimate) => {
+    if (user.role === 'BUYER') {
+      return estimate.request.status;
+    } else {
+      return estimate.response?.status || estimate.request.status;
+    }
+  };
 
   return (
     <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh' }}>
@@ -14,7 +27,7 @@ function EstimateList() {
           <h2 className="mb-0">견적 관리</h2>
           <Link to="/estimateSheet" className="btn btn-primary">견적 요청서 작성</Link>
         </div>
-        {/* 1. 미확인, 미승인된 견적 제안서 */}
+        {/* 진행중 계약 (status 1,2) */}
         <div className="card shadow-sm mb-4">
           <div className="card-header bg-white">
             <h5 className="mb-0">진행중인 계약</h5>
@@ -25,7 +38,7 @@ function EstimateList() {
                 <thead>
                   <tr>
                     <th>견적번호</th>
-                    <th>공급기업</th>
+                    <th>기업명</th>
                     <th>품목</th>
                     <th>요청일</th>
                     <th>납품기한</th>
@@ -33,24 +46,28 @@ function EstimateList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {estimates.length === 0 ? (
+                  {!estimates || estimates.length === 0 ? (
                     <tr><td colSpan={6} className="text-center text-muted">수신된 제안서가 없습니다.</td></tr>
                   ) : (
                     estimates
-                      .filter(estimate => [1, 2].includes(estimate.request.status))
+                      .filter(estimate => {
+                        const status = getStatus(estimate);
+                        return status && [1, 2].includes(status);
+                      })
                       .map(estimate => {
-                        const { request, response, items } = estimate;
-                        const { label, badgeColor, button } = ESTIMATE_STATUS[request.status] || { label: '-', badgeColor: 'secondary', button: false };
-                        const showButton = button && response;
+                        const { request, response, items = [] } = estimate;
+                        const status = getStatus(estimate);
+                        const { label, badgeColor } = ESTIMATE_STATUS[status] || { label: '-', badgeColor: 'secondary' };
+                        const showButton = status === 1;
 
                         return (
                           <tr key={request.request_id}>
                             <td>{request.request_id}</td>
-                            <td>{`공급기업 ${request.supplier_id}`}</td>
+                            <td>{request.company_name || '-'}</td>
                             <td>
-                              {items.map(item => item.detail_category_name).join(', ').length > 10 
+                              {items?.map(item => item.detail_category_name).join(', ').length > 10 
                                 ? items.map(item => item.detail_category_name).join(', ').substring(0, 10) + '...'
-                                : items.map(item => item.detail_category_name).join(', ')}
+                                : items?.map(item => item.detail_category_name).join(', ')}
                             </td>
                             <td>{request.created_at}</td>
                             <td>{request.due_date}</td>
@@ -58,8 +75,27 @@ function EstimateList() {
                               <div className="d-flex align-items-center">
                                 <span className={`badge bg-${badgeColor}`}>{label}</span>
                                 {showButton && (
-                                  <Link to={`/received-proposals/${response.response_id}`} className="btn btn-sm ms-2 btn-outline-warning">
+                                  <Link
+                                  to={
+                                    response
+                                    ? `/estimate/${request.request_id}/${response.response_id}`
+                                    : `/estimate/${request.request_id}`
+                                  }
+                                  className="btn btn-sm ms-2 btn-outline-warning"
+                                  >
                                     확인/승인
+                                  </Link>
+                                )}
+                                {status === 2 && (
+                                  <Link
+                                    to={
+                                      user.role === 'BUYER'
+                                        ? `/estimate/${request.request_id}`
+                                        : `/estimate/${request.request_id}/${response.response_id}`
+                                    }
+                                    className="btn btn-sm ms-2 btn-outline-success"
+                                  >
+                                    상세보기
                                   </Link>
                                 )}
                               </div>
@@ -74,7 +110,7 @@ function EstimateList() {
           </div>
         </div>
 
-        {/* 2. 계약이 체결되었거나, 거절된 견적 제안서 내역*/}
+        {/* 완료된 계약 (status 3,4) */}
         <div className="card shadow-sm mb-4">
           <div className="card-header bg-white d-flex justify-content-between align-items-center">
             <h5 className="mb-0">완료된 계약</h5>
@@ -86,7 +122,7 @@ function EstimateList() {
                   <tr>
                     <th>계약번호</th>
                     <th>견적번호</th>
-                    <th>공급기업</th>
+                    <th>기업명</th>
                     <th>품목</th>
                     <th>거래금액</th>
                     <th>체결일</th>
@@ -94,35 +130,44 @@ function EstimateList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {estimates.length === 0 ? (
+                  {!estimates || estimates.length === 0 ? (
                     <tr><td colSpan={7} className="text-center text-muted">발송 내역이 없습니다.</td></tr>
                   ) : (
                     estimates
-                      .filter(estimate => [3, 4].includes(estimate.request.status))
+                      .filter(estimate => {
+                        const status = getStatus(estimate);
+                        return status && [3, 4].includes(status);
+                      })
                       .map(estimate => {
-                        const { request, contract = {}, items = [] } = estimate;
-                        const { label, badgeColor } = ESTIMATE_STATUS[request.status] || { label: '-', badgeColor: 'secondary' };
+                        const { request, response, items = [] } = estimate;
+                        const status = getStatus(estimate);
+                        const { label, badgeColor } = ESTIMATE_STATUS[status] || { label: '-', badgeColor: 'secondary' };
 
                         return (
                           <tr key={request.request_id}>
-                            <td>{request.status === 3 ? contract?.contract_id || '-' : '-'}</td>
+                            <td>{request.status === 3 ? response?.response_id || '-' : '-'}</td>
                             <td>{request.request_id}</td>
-                            <td>공급기업 {request.status === 3 ? contract?.supplier_company_id || request.supplier_id : request.supplier_id}</td>
+                            <td>{request.company_name || '-'}</td>
                             <td>
-                              {items.map(item => item.detail_category_name).join(', ').length > 10 
+                              {items?.map(item => item.detail_category_name).join(', ').length > 10 
                                 ? items.map(item => item.detail_category_name).join(', ').substring(0, 10) + '...'
-                                : items.map(item => item.detail_category_name).join(', ')}
+                                : items?.map(item => item.detail_category_name).join(', ')}
                             </td>
                             <td>
                               {request.status === 3 ? (
-                                estimate.response_items?.reduce((sum, item) => sum + (item.unit_price || 0), 0).toLocaleString() + '원'
+                                response?.total_price?.toLocaleString() + '원'
                               ) : '-'}
                             </td>
-                            <td>{request.status === 3 ? contract?.created_at || '-' : '-'}</td>
+                            <td>{request.status === 3 ? response?.created_at || '-' : '-'}</td>
                             <td>
                               <div className="d-flex justify-content-between align-items-center">
                                 <span className={`badge bg-${badgeColor}`}>{label}</span>
-                                <Link to={`/estimateDetail/${request.request_id}`} className="btn btn-sm btn-outline-primary">상세보기</Link>
+                                <Link 
+                                  to={`/estimate/${request.request_id}/${response.response_id}`} 
+                                  className={`btn btn-sm btn-outline-${request.status === 3 ? 'primary' : 'danger'}`}
+                                >
+                                  상세보기
+                                </Link>
                               </div>
                             </td>
                           </tr>

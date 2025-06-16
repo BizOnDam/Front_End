@@ -1,14 +1,80 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { mockEstimateRequests } from '../../data/MockEstimateList';
 import { ESTIMATE_STATUS } from '../../constants/estimateStatus';
+import { getEstimateDetail, formatCurrency, findMatchingRequestItem, rejectEstimate, acceptEstimate } from './ProcessEstimateDetail';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const EstimateDetail = () => {
-  const { id } = useParams();
+const EstimateDetail = ({user}) => {
+  const { requestId, responseId } = useParams();
+  console.log('▶ EstimateDetail user:', user);
+  console.log('▶ requestId:', requestId, '▶ responseId:', responseId);
   const navigate = useNavigate();
-  const estimate = mockEstimateRequests.find(est => est.request.request_id === parseInt(id));
-  const { request, items = [], response, response_items = [] } = estimate || {};
+  const [estimate, setEstimate] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchEstimateDetail = async () => {
+      try {
+        setLoading(true);
+        const data = await getEstimateDetail(requestId, responseId);
+        setEstimate(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEstimateDetail();
+  }, [requestId, responseId]);
+
+  const handleReject = async () => {
+    if (window.confirm('계약을 거절하겠습니까?')) {
+      try {
+        await rejectEstimate(requestId, user.role, user.userId);
+        navigate(`/estimateList?companyId=${user?.companyId}`);
+      } catch (error) {
+        alert(`견적 거절에 실패했습니다: ${error.message}`);
+      }
+    }
+  };
+
+  const handleAccept = async () => {
+    if (window.confirm('계약을 수락하겠습니까?')) {
+      try {
+        await acceptEstimate(requestId);
+        navigate(`/estimateList?companyId=${user?.companyId}`);
+      } catch (error) {
+        alert(`견적 수락에 실패했습니다: ${error.message}`);
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh' }}>
+        <div className="container py-5 text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3">견적 정보를 불러오는 중입니다...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh' }}>
+        <div className="container py-5 text-center">
+          <h3 className="text-danger">오류가 발생했습니다</h3>
+          <p>{error}</p>
+          <button className="btn btn-outline-secondary mt-3" onClick={() => navigate(-1)}>뒤로가기</button>
+        </div>
+      </div>
+    );
+  }
 
   if (!estimate) {
     return (
@@ -21,6 +87,8 @@ const EstimateDetail = () => {
     );
   }
 
+  const { request, items = [], response, response_items = [] } = estimate;
+
   return (
     <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh' }}>
       <div className="container py-4">
@@ -28,7 +96,7 @@ const EstimateDetail = () => {
           <button className="btn btn-outline-secondary me-3" onClick={() => navigate(-1)}>
             ←
           </button>
-          <h2 className="mb-0">견적번호 <span className="text-primary">{String(request.request_id)}23145</span> 상세정보</h2>
+          <h2 className="mb-0">견적번호 <span className="text-primary">{request.request_id}</span> 상세정보</h2>
         </div>
 
         {/* 견적 요청 정보 */}
@@ -53,6 +121,14 @@ const EstimateDetail = () => {
               </div>
               <div className="col-md-6">
                 <strong>상세 설명:</strong> {request.detail || '-'}
+              </div>
+            </div>
+            <div className="row mb-2">
+              <div className="col-md-6">
+                <strong>구매사:</strong> {request.buyer_company_name || '-'}
+              </div>
+              <div className="col-md-6">
+                <strong>공급사:</strong> {request.supplier_company_name || '-'}
               </div>
             </div>
           </div>
@@ -94,9 +170,23 @@ const EstimateDetail = () => {
             </div>
           </div>
         </div>
+        {/* SUPPLIER / 요청 상태 2일 때 */}
+        <div className="d-flex justify-content-end gap-2 mt-4">
+          {request.status === 2 && user.role === 'SUPPLIER' && (
+            <>
+              <button className="btn btn-outline-danger" onClick={handleReject}>거절</button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => navigate(`/estimate/${requestId}/response`)}
+              >
+                견적 제안서 작성
+              </button>
+            </>
+          )}
+        </div>
 
         {/* 견적 응답 정보 */}
-        {response && (
+        {response && response.response_id && (
           <>
             <div className="card shadow-sm mb-4">
               <div className="card-header" style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #e9ecef' }}>
@@ -126,10 +216,12 @@ const EstimateDetail = () => {
                     <strong>특별 조항:</strong> {response.special_terms || '-'}
                   </div>
                   <div className="col-md-6">
-                    <strong>총 견적 금액:</strong> {response.total_price ? new Intl.NumberFormat('ko-KR', {
-                      style: 'currency',
-                      currency: 'KRW'
-                    }).format(response.total_price) : '-'}
+                    <strong>총 견적 금액:</strong> {formatCurrency(response.total_price)}
+                  </div>
+                </div>
+                <div className="row mb-2">
+                  <div className="col-md-6">
+                    <strong>응답 생성일시:</strong> {response.created_at || '-'}
                   </div>
                 </div>
               </div>
@@ -158,18 +250,13 @@ const EstimateDetail = () => {
                         </tr>
                       ) : (
                         response_items.map((responseItem) => {
-                          const requestItem = items.find(
-                            (item) => item.item_id === responseItem.item_id
-                          );
+                          const requestItem = findMatchingRequestItem(items, responseItem);
                           return (
                             <tr key={responseItem.response_item_id}>
                               <td>{requestItem?.category_name || '-'}</td>
                               <td>{requestItem?.detail_category_name || '-'}</td>
                               <td className="text-end">
-                                {responseItem.unit_price ? new Intl.NumberFormat('ko-KR', {
-                                  style: 'currency',
-                                  currency: 'KRW'
-                                }).format(responseItem.unit_price) : '-'}
+                                {formatCurrency(responseItem.unit_price)}
                               </td>
                               <td className="text-end">{responseItem.delivery_days ? `${responseItem.delivery_days}일` : '-'}</td>
                             </tr>
@@ -180,6 +267,16 @@ const EstimateDetail = () => {
                   </table>
                 </div>
               </div>
+            </div>
+
+            {/* BUYER / 응답 상태 2일 때 */}
+            <div className="d-flex justify-content-end gap-2 mt-4">
+              {response?.status === 2 && user.role === 'BUYER' && (
+                <>
+                  <button className="btn btn-outline-danger" onClick={handleReject}>거절</button>
+                  <button className="btn btn-success" onClick={handleAccept}>수락</button>
+                </>
+              )}
             </div>
           </>
         )}
