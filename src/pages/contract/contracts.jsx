@@ -1,10 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import Calendar from 'react-calendar';
-import { FaFileContract, FaFileDownload, FaTruck, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import 'react-calendar/dist/Calendar.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { mockEstimateRequests } from '../../data/MockEstimateList';
-import Pagination from './Pagination';
+import Pagination from '../../components/Pagination';
+import ContractDetailModal from './ContractDetailModal';
+import { 
+  getEventsForDate, 
+  getSortedContracts, 
+  getPaginationData, 
+  formatCurrency,
+  handleViewContract,
+  handleDownloadContract,
+  fetchContractDetail
+} from './ProcessContracts';
 
 // 달력 커스텀 스타일
 const calendarStyles = `
@@ -16,69 +24,73 @@ const calendarStyles = `
   .react-calendar__tile--now:enabled:focus {
     background: #bbdefb !important;
   }
+  .react-calendar__tile {
+    height: 60px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+  }
+  .react-calendar__tile abbr {
+    position: absolute !important;
+    top: 30% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
 `;
 
-function Contracts() {
-  const [contracts] = useState(mockEstimateRequests);
+function Contracts({ userType, user }) {
+  const [contracts, setContracts] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
   const [selectedContract, setSelectedContract] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState(null);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('ko-KR', {
-      style: 'currency',
-      currency: 'KRW'
-    }).format(amount);
-  };
-
-  // 견적 요청에서 마감일 가져오기
-  const getDueDate = (contract) => {
-    return contract.request?.due_date || contract.created_at;
-  };
-  
-
-  // 달력에 표시할 이벤트 데이터 생성
-  const getEventsForDate = (date) => {
-    const events = [];
-    
-    // 계약 데이터에서 이벤트 추가
-    contracts.forEach(contract => {
-      if (!contract.contract) return;
-
-      const contractDate = new Date(contract.contract.created_at);
-      const dueDate = new Date(contract.request.due_date);
-
-      if (contractDate.toDateString() === date.toDateString()) {
-        events.push({
-          type: '계약체결',
-          title: `${contract.contract.supplier_company_id} - ${contract.items.map(item => item.detail_category_name).join(', ')}`,
-          date: contract.contract.created_at
+  useEffect(() => {
+    const fetchContracts = async () => {
+      try {
+        console.log("보낼 params", { user });
+        const date = null; // 또는 selectedDate를 포맷팅해서 필터링
+        const response = await axios.get('http://localhost:8083/api/contracts/list', {
+          params: {
+            userId: user?.userId,
+            companyId: user?.companyId,
+            role: user?.role,
+            ...(date ? { date: date.toISOString().split('T')[0] } : {}),
+          },
         });
-      }
+        console.log("계약 리스트 데이터:", response.data.data);
 
-      if (dueDate.toDateString() === date.toDateString()) {
-        events.push({
-          type: '납품기한',
-          title: `${contract.contract.supplier_company_id} - ${contract.items.map(item => item.detail_category_name).join(', ')}`,
-          date: contract.request.due_date
-        });
+        setContracts(response.data.data); // 혹시 응답 구조가 다르면 조정 필요
+      } catch (error) {
+        console.error('계약 정보 불러오기 실패:', error);
+        if (error.response) {
+          console.error("에러 응답 데이터:", error.response.data);
+          console.error("에러 상태 코드:", error.response.status);
+          console.error("에러 헤더:", error.response.headers);
+        }
       }
-    });
+    };
 
-    return events;
-  };
+    fetchContracts();
+  }, [user, userType]);
 
   // 달력 타일 렌더링 커스터마이징
   const tileContent = ({ date }) => {
-    const events = getEventsForDate(date);
+    const events = getEventsForDate(date, contracts);
     if (events.length > 0) {
       return (
-        <div className="calendar-event-dot" style={{ 
-          color: events[0].type === '계약체결' ? '#0d6efd' : '#198754'
-        }}>
-          ●
+        <div style={{ height: '10%'}}>
+          <div style={{ 
+            fontSize: '15px',
+            color: events[0].type === '계약체결' ? '#0d6efd' : '#198754',
+            fontWeight: 'bold'
+          }}>
+            ●
+            </div>
         </div>
       );
     }
@@ -86,41 +98,29 @@ function Contracts() {
   };
 
   // 선택된 날짜의 이벤트 표시
-  const selectedDateEvents = getEventsForDate(selectedDate);
+  const selectedDateEvents = getEventsForDate(selectedDate, contracts);
 
-  const handleViewContract = (contractId) => {
-    // TODO 전자계약 보기 기능 구현
-    console.log('View contract:', contractId);
-  };
-
-  const handleDownloadContract = (contractId) => {
-    // TODO 계약서 다운로드 기능 구현
-    console.log('Download contract:', contractId);
-  };
-
-  const handleViewDetail = (contract) => {
-    setSelectedContract(contract);
-    setShowModal(true);
+  const handleViewDetail = async (contract) => {
+    setDetailLoading(true);
+    setDetailError(null);
+    try {
+      const detail = await fetchContractDetail(contract.requestId, contract.responseId);
+      setSelectedContract(detail);
+      setShowModal(true);
+    } catch (e) {
+      setDetailError('상세 정보를 불러오지 못했습니다.');
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   // 마감일 기준으로 정렬된 계약 목록
-  const sortedContracts = [...contracts]
-    .filter(contract => contract.contract) // contract 객체가 있는 경우만 필터링
-    .sort((a, b) => {
-      const dateA = new Date(getDueDate(a));
-      const dateB = new Date(getDueDate(b));
-      return dateB - dateA;
-    });
+  const sortedContracts = getSortedContracts(contracts);
 
   // 페이지네이션 관련 계산
-  const totalPages = Math.ceil(sortedContracts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentContracts = sortedContracts.slice(startIndex, endIndex);
+  const { totalPages, currentContracts } = getPaginationData(sortedContracts, currentPage, itemsPerPage);
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
+  const handlePageChange = (pageNumber) => { setCurrentPage(pageNumber); };
 
   return (
     <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh' }}>
@@ -193,27 +193,20 @@ function Contracts() {
                 </thead>
                 <tbody>
                   {currentContracts.map(contract => (
-                    <tr key={contract.contract.contract_id}>
-                      <td>{contract.contract.contract_id}</td>
-                      <td>{contract.contract.supplier_company_id}</td>
+                    <tr key={contract.contractId}>
+                      <td>{contract.contractId}</td>
+                      <td>{contract.supplierCompanyId}</td>
                       <td>
-                        {contract.items.map(item => item.detail_category_name).join(', ').length > 10 
-                          ? contract.items.map(item => item.detail_category_name).join(', ').substring(0, 10) + '...'
-                          : contract.items.map(item => item.detail_category_name).join(', ')}
+                        {contract.itemNames?.join(', ').length > 10 
+                        ? contract.itemNames.join(', ').substring(0, 10) + '...'
+                        : contract.itemNames.join(', ')}
                       </td>
-                      <td>
-                        {contract.response?.total_price 
-                          ? formatCurrency(contract.response.total_price)
-                          : '-'}
-                      </td>
-                      <td>{contract.contract.created_at.split(' ')[0]}</td>
-                      <td>{contract.request.due_date}</td>
+                      <td>{formatCurrency(contract.totalPrice)}</td>
+                      <td>{contract.contractDate}</td>
+                      <td>{contract.dueDate}</td>
                       <td>
                         <div className="btn-group">
-                          <button 
-                            className="btn btn-sm btn-outline-primary"
-                            onClick={() => handleViewDetail(contract)}
-                          >
+                          <button className="btn btn-sm btn-outline-primary" onClick={() => handleViewDetail(contract)}>
                             상세보기
                           </button>
                         </div>
@@ -236,118 +229,15 @@ function Contracts() {
         </div>
 
         {/* 계약 상세 모달 */}
-        {showModal && selectedContract && (
-          <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1">
-            <div className="modal-dialog modal-lg">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">계약 상세 정보</h5>
-                  <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
-                </div>
-                <div className="modal-body">
-                  <div className="row mb-3">
-                    <div className="col-md-6">
-                      <h6>기본 정보</h6>
-                      <table className="table table-sm">
-                        <tbody>
-                          <tr>
-                            <th>계약번호</th>
-                            <td>{selectedContract.contract.contract_id}</td>
-                          </tr>
-                          <tr>
-                            <th>공급업체</th>
-                            <td>{selectedContract.contract.supplier_company_id}</td>
-                          </tr>
-                          <tr>
-                            <th>계약체결일</th>
-                            <td>{selectedContract.contract.created_at.split(' ')[0]}</td>
-                          </tr>
-                          <tr>
-                            <th>납품기한</th>
-                            <td>{selectedContract.request.due_date}</td>
-                          </tr>
-                          <tr>
-                            <th>계약금액</th>
-                            <td>{formatCurrency(selectedContract.response.total_price)}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="col-md-6">
-                      <h6>계약 정보</h6>
-                      <table className="table table-sm">
-                        <tbody>
-                          <tr>
-                            <th>결제조건</th>
-                            <td>{selectedContract.contract.payment_terms}</td>
-                          </tr>
-                          <tr>
-                            <th>보증기간</th>
-                            <td>{selectedContract.contract.warranty}</td>
-                          </tr>
-                          <tr>
-                            <th>특이사항</th>
-                            <td>{selectedContract.contract.special_terms}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  <h6>계약 품목</h6>
-                  <div className="card">
-                    <div className="card-body">
-                      <table className="table table-sm">
-                        <thead>
-                          <tr>
-                            <th>품목</th>
-                            <th>수량</th>
-                            <th>단위</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedContract.items.map((item, index) => (
-                            <tr key={index}>
-                              <td>{item.detail_category_name}</td>
-                              <td>{item.quantity}</td>
-                              <td>{item.specification}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button 
-                    type="button" 
-                    className="btn btn-primary"
-                    onClick={() => handleViewContract(selectedContract.contract.contract_id)}
-                  >
-                    <FaFileContract className="me-2" />
-                    전자계약 보기
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-success"
-                    onClick={() => handleDownloadContract(selectedContract.contract.contract_id)}
-                  >
-                    <FaFileDownload className="me-2" />
-                    계약서 다운로드
-                  </button>
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                    닫기
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 모달 배경 */}
-        {showModal && (
-          <div className="modal-backdrop fade show"></div>
-        )}
+        <ContractDetailModal
+          showModal={showModal}
+          selectedContract={selectedContract}
+          onClose={() => setShowModal(false)}
+          onViewContract={handleViewContract}
+          onDownloadContract={handleDownloadContract}
+          loading={detailLoading}
+          error={detailError}
+        />
       </div>
     </div>
   );
