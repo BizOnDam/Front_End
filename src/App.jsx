@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
-import Login from './pages/sign/Login'
+import Login from './pages/sign/login'
 import RegisterStep1 from './pages/sign/RegisterStep1'
 import RegisterStep2 from './pages/sign/RegisterStep2'
 import RegisterStep3 from './pages/sign/RegisterStep3'
@@ -49,14 +49,14 @@ function App() {
 
   useEffect(() => {
     // TODO: 실제 로그인 상태 확인 로직 구현
-    // setUser(null);
-    setUser({
-      username: '윤가영',
-      userId: '12352',
-      companyId: '6795',
-      companyName: '비즈온담',
-      role: null
-    });
+    setUser(null);
+    // setUser({
+    //   username: '윤가영',
+    //   userId: '12352',
+    //   companyId: '6795',
+    //   companyName: '비즈온담',
+    //   role: null
+    // });
     // setUser({
     //   username: '가영',
     //   userId: '12353',
@@ -93,6 +93,5 @@ function App() {
     </BrowserRouter>
   )
 }
-
 
 export default App
