@@ -13,7 +13,6 @@ import EstimateList from './pages/estimate/EstimateList'
 import EstimateSheet from './pages/estimate/estimateSheet'
 import EstimateDetail from './pages/estimate/EstimateDetail'
 import EstimateResponseSheet from './pages/estimate/EstimateResponseSheet'
-// import ReceivedProposalDetail from './pages/estimate/ReceivedProposalDetail'
 import Contracts from './pages/contract/Contracts'
 import HistoryList from './pages/history/HistoryList'
 import HistoryDetail from './pages/history/HistoryDetail'
@@ -71,7 +70,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<CommonLayout user={user}><Home user={user} setUser={setUser} /></CommonLayout>} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<CommonLayout user={user}><Login /></CommonLayout>} />
         <Route path="/RegisterStep1" element={<RegisterStep1 />} />
         <Route path="/RegisterStep2" element={<RegisterStep2 />} />
         <Route path="/RegisterStep3" element={<RegisterStep3 />} />
@@ -87,7 +86,6 @@ function App() {
         <Route path="/estimate/:requestId" element={<CommonLayout user={user}><EstimateDetail user={user} /></CommonLayout>} />
         <Route path="/estimate/:requestId/:responseId" element={<CommonLayout user={user}><EstimateDetail user={user} /></CommonLayout>} />
         <Route path="/estimate/:requestId/response" element={<CommonLayout user={user}><EstimateResponseSheet user={user} /></CommonLayout>} />
-        {/* <Route path="/received-proposals/:id" element={<CommonLayout user={user}><ReceivedProposalDetail user={user} /></CommonLayout>} /> */}
         <Route path="/contracts" element={<CommonLayout user={user}><Contracts user={user} /></CommonLayout>} />
         <Route path="/history" element={<CommonLayout user={user}><HistoryList user={user} /></CommonLayout>} />
         <Route path="/historyDetail/:id" element={<CommonLayout user={user}><HistoryDetail user={user} /></CommonLayout>} />

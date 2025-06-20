@@ -1,15 +1,14 @@
-// src/pages/Login.jsx
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { login } from '../../api/authApi';
+import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import RegisterStep1 from './RegisterStep1';
-import SignNavbar from '../../components/SignNavbar';
-import Footer from '../../components/Footer';
 
 function Login() {
   const [form, setForm] = useState({
-    username: '',
-    password: '',
+    loginId: '',
+    loginPwd: '',
     rememberMe: false,
   });
 
@@ -18,16 +17,54 @@ function Login() {
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('▶ 로그인 시도:', form);
-    // TODO: 로그인 API 연동
+    try {
+      console.log("try");
+      // const response = await axios.post('http://localhost:8080/user-service/api/auth/login'
+        const response = await axios.post('http://localhost:8081/api/auth/login'
+        // const response = await axios.get('https://jsonplaceholder.typicode.com/todos/1'  
+    //      loginId: "yungga",
+    //     loginPwd: "qwer1234!",
+    ).then ( (r) => {
+      console.log("type of:", typeof(r));
+    }).catch((c) => {
+      console.log("c", c);
+    })
+      // const data = await login({
+      //   loginId: form.loginId,
+      //   loginPwd: form.loginPwd,
+      // });
+      // const { data } = response; // 응답 본문 추출
+      // console.log('▶ 로그인 응답:', data);
+    
+      // if (!data.success) {
+      //   throw new Error(data.message || '로그인 실패');
+      // }
+
+      // // 로그인 성공 시 정보 저장
+      // localStorage.setItem('accessToken', data.data.accessToken);
+      // localStorage.setItem('refreshToken', data.data.refreshToken);
+      // localStorage.setItem('userId', data.data.userId);
+      // localStorage.setItem('loginId', data.data.loginId);
+      // localStorage.setItem('username', data.data.username);
+      // localStorage.setItem('companyId', data.data.companyId);
+      // localStorage.setItem('companyNameKr', data.data.companyNameKr);
+      // localStorage.setItem('roleInCompany', data.data.roleInCompany);
+  
+      // alert('로그인 성공!');
+      // window.location.href = '/'; // 로그인 후 이동할 경로
+  
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || '로그인 중 오류 발생';
+      console.error('로그인 실패:', msg);
+      alert(msg);
+    }
   };
 
   return (
     <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <SignNavbar/>
-    
       {/* Main Content */}
       <div style={{ flex: 1 }}>
         <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
@@ -39,10 +76,11 @@ function Login() {
           <input
             type="text"
             className="form-control"
-            name="username"
-            value={form.username}
+            name="loginId"
+            value="yungga"
+            // value={form.username}
             onChange={handleChange}
-            placeholder="이메일 또는 아이디"
+            placeholder="가입한 아이디"
             required
           />
         </div>
@@ -52,8 +90,9 @@ function Login() {
           <input
             type="password"
             className="form-control"
-            name="password"
-            value={form.password}
+            name="loginPwd"
+            value="qwer1234!"
+            // value={form.password}
             onChange={handleChange}
             required
           />
@@ -81,8 +120,6 @@ function Login() {
           </form>
         </div>
       </div>
-      {/* Footer */}
-      <Footer/>
     </div>
   );
 }
