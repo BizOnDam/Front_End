@@ -1,7 +1,7 @@
 import axiosInstance from './axiosInstance';
 
 export const login = async ({ loginId, loginPwd }) => {
-  const response = await axiosInstance.post( 'http://localhost:8081/api/auth/login', { 
+  const response = await axiosInstance.post( '/user-service/api/auth/login', { 
     loginId, 
     loginPwd 
 });
