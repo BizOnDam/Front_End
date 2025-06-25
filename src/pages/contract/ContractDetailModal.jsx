@@ -100,28 +100,13 @@ const ContractDetailModal = ({ showModal, selectedContract, onClose, onDownloadC
               </div>
             </div>
             <div className="modal-footer">
-              {/* <button 
-                type="button" 
-                className="btn btn-primary"
-                onClick={() => onViewContract(selectedContract.contractId)}
-              >
-                <FaFileContract className="me-2" />
-                전자계약 보기
-              </button> */}
-              <button 
-                type="button"
-                className="btn btn-primary"
-                onClick={() => window.downloadAndSendPdf && window.downloadAndSendPdf(selectedContract.requestId, selectedContract.responseId)}
-              >
-                PDF 저장 및 업로드
-              </button>
               <button 
                 type="button" 
                 className="btn btn-success"
                 onClick={() => onDownloadContract(selectedContract.contractId)}
               >
                 <FaFileDownload className="me-2" />
-                계약서 다운로드
+                계약서 보기
               </button>
               <button type="button" className="btn btn-secondary" onClick={onClose}>
                 닫기
