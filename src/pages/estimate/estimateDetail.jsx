@@ -1,38 +1,28 @@
-import React, { useState, useEffect } from 'react';
+
 import { useParams, useNavigate } from 'react-router-dom';
+import { useEstimateDetail } from '../../hooks/estimate/useEstimateDetail';
+import { rejectEstimate, acceptEstimate } from '../../api/estimateApi';
+import { useAuth }    from '../../contexts/AuthContext';
+import { useService } from '../../contexts/ServiceContext';
 import { ESTIMATE_STATUS } from '../../constants/estimateStatus';
-import { getEstimateDetail, formatCurrency, findMatchingRequestItem, rejectEstimate, acceptEstimate } from './ProcessEstimateDetail';
+import { formatCurrency, findMatchingRequestItem } from '../../utils/estimateTransform';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const EstimateDetail = ({user}) => {
+const EstimateDetail = () => {
+  const { user } = useAuth();
+  const { serviceType } = useService();
   const { requestId, responseId } = useParams();
   console.log('▶ EstimateDetail user:', user);
   console.log('▶ requestId:', requestId, '▶ responseId:', responseId);
+  console.log('▶ user.role:', serviceType);
   const navigate = useNavigate();
-  const [estimate, setEstimate] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchEstimateDetail = async () => {
-      try {
-        setLoading(true);
-        const data = await getEstimateDetail(requestId, responseId);
-        setEstimate(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEstimateDetail();
-  }, [requestId, responseId]);
+  const { estimate, loading, error } = useEstimateDetail(requestId, responseId);
 
   const handleReject = async () => {
     if (window.confirm('계약을 거절하겠습니까?')) {
       try {
-        await rejectEstimate(requestId, user.role, user.userId);
+        await rejectEstimate(requestId, serviceType, user.userId);
         navigate(`/estimateList?companyId=${user?.companyId}`);
       } catch (error) {
         alert(`견적 거절에 실패했습니다: ${error.message}`);
@@ -44,7 +34,7 @@ const EstimateDetail = ({user}) => {
     if (window.confirm('계약을 수락하겠습니까?')) {
       try {
         await acceptEstimate(requestId);
-        navigate(`/estimateList?companyId=${user?.companyId}`);
+        navigate(`/estimateList?companyId=${user?.companyId}`); // 계약 체결 페이지로 넘기기
       } catch (error) {
         alert(`견적 수락에 실패했습니다: ${error.message}`);
       }
@@ -172,7 +162,7 @@ const EstimateDetail = ({user}) => {
         </div>
         {/* SUPPLIER / 요청 상태 2일 때 */}
         <div className="d-flex justify-content-end gap-2 mt-4">
-          {request.status === 2 && user.role === 'SUPPLIER' && (
+          {request.status === 2 && serviceType === 'supplier' && (
             <>
               <button className="btn btn-outline-danger" onClick={handleReject}>거절</button>
               <button 
@@ -271,7 +261,7 @@ const EstimateDetail = ({user}) => {
 
             {/* BUYER / 응답 상태 2일 때 */}
             <div className="d-flex justify-content-end gap-2 mt-4">
-              {response?.status === 2 && user.role === 'BUYER' && (
+              {response?.status === 2 && serviceType === 'buyer' && (
                 <>
                   <button className="btn btn-outline-danger" onClick={handleReject}>거절</button>
                   <button className="btn btn-success" onClick={handleAccept}>수락</button>

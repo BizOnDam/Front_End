@@ -1,76 +1,23 @@
-import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEstimateDetail } from './ProcessEstimateDetail';
-import { processEstimateResponse } from './ProcessEstimateResponseSheet';
+import { useEstimateResponseForm } from '../../hooks/estimate/useEstimateResponseForm';
+import { useAuth } from '../../contexts/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const EstimateResponseSheet = ({ user }) => {
+const EstimateResponseSheet = () => {
   const { requestId } = useParams();
+  console.log("EstimateResponseSheet requestId", requestId);
   const navigate = useNavigate();
-  const [estimate, setEstimate] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
-    payment_terms: '',
-    warranty: '',
-    special_terms: '',
-    items: []
-  });
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchEstimateDetail = async () => {
-      try {
-        setLoading(true);
-        const data = await getEstimateDetail(requestId);
-        setEstimate(data);
-        // 초기 아이템 데이터 설정
-        setFormData(prev => ({
-          ...prev,
-          items: data.items.map(item => ({
-            item_id: item.item_id,
-            unit_price: '',
-            delivery_days: ''
-          }))
-        }));
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEstimateDetail();
-  }, [requestId]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleItemChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await processEstimateResponse(formData, requestId, user, estimate);
-      if (response.success) {
-        alert(`${response.companyName}에 견적 응답이 발송되었습니다!`);
-        navigate('/estimateList');
-      }
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+  const {
+    estimate,
+    formData,
+    loading,
+    error,
+    handleInputChange,
+    handleItemChange,
+    handleSubmit,
+  } = useEstimateResponseForm(requestId, user, navigate);
 
   if (loading) {
     return (
@@ -132,7 +79,7 @@ const EstimateResponseSheet = ({ user }) => {
                   <strong>견적번호:</strong> {request.request_id}
                 </div>
                 <div className="col-md-6">
-                  <strong>납품 기한:</strong> {request.due_date}
+                  <strong>납품기한:</strong> {request.due_date}
                 </div>
               </div>
               <div className="row mb-2">

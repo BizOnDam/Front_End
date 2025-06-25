@@ -1,34 +1,25 @@
-import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {
-  useCategoryData,
-  createInitialItem,
-  handleCategoryChange,
-  handleDetailCategoryChange,
-  handleItemChange,
-  addItem,
-  removeItem,
-  handleSubmit
-} from './ProcessEstimateSheet';
+import { useEstimateForm } from '../../hooks/estimate/useEstimateForm';
+import { useAuth } from '../../contexts/AuthContext';
 
-function EstimateSheet({ user }) {
+function EstimateSheet() {
+  const { user } = useAuth(); 
+  console.log("EstimateSheet", user);
   const navigate = useNavigate();
+  const onSuccess = (requestId) => navigate(`/demand/matching/${requestId}`);
 
-  const [items, setItems] = useState([createInitialItem(1)]);
-  const [form, setForm] = useState({ due_date: '', detail: '' });
-  const [selectedDetailCategories, setSelectedDetailCategories] = useState({});
-  const [error, setError] = useState('');
+    const {
+    form, items, categories, loading, error, selectedDetailCategories,
+    handleFormChange, 
+    handleCategoryChange, 
+    handleDetailCategoryChange,
+    handleItemChange, 
+    addItem, 
+    removeItem, 
+    handleSubmit
+  } = useEstimateForm(onSuccess);
 
-  const { categories, loading } = useCategoryData(setError);
-
-  const handleFormChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const onSuccess = (requestId) => {
-    navigate(`/demand/matching/${requestId}`);
-  };
 
   if (loading) {
     return (
@@ -53,7 +44,7 @@ function EstimateSheet({ user }) {
 
         <div className="card shadow-sm mb-4">
           <div className="card-body">
-            <form onSubmit={(e) => handleSubmit(e, items, form, setError, onSuccess, user)}>
+             <form onSubmit={handleSubmit}>
               {items.map((item, index) => (
                 <div key={item.id} className="border rounded p-3 mb-3">
                   <div className="d-flex justify-content-between align-items-center mb-3">
@@ -62,7 +53,7 @@ function EstimateSheet({ user }) {
                       <button 
                         type="button" 
                         className="btn btn-outline-danger btn-sm"
-                        onClick={() => removeItem(item.id, items, setItems, setSelectedDetailCategories)}
+                        onClick={() => removeItem(item.id)}
                       >
                         삭제
                       </button>
@@ -75,16 +66,7 @@ function EstimateSheet({ user }) {
                       <select 
                         className="form-select" 
                         value={item.category_name} 
-                        onChange={(e) =>
-                          handleCategoryChange(
-                            item.id,
-                            e.target.value,
-                            items,
-                            setItems,
-                            setSelectedDetailCategories,
-                            setError
-                          )
-                        }
+                        onChange={e => handleCategoryChange(item.id, e.target.value)}
                         required
                       >
                         <option value="">품명을 선택하세요</option>
@@ -102,13 +84,7 @@ function EstimateSheet({ user }) {
                         className="form-select" 
                         value={item.detail_category_name} 
                         onChange={(e) =>
-                          handleDetailCategoryChange(
-                            item.id,
-                            e.target.value,
-                            items,
-                            setItems,
-                            selectedDetailCategories
-                          )
+                          handleDetailCategoryChange(item.id, e.target.value)
                         }
                         required
                         disabled={!item.category_name}
@@ -131,7 +107,7 @@ function EstimateSheet({ user }) {
                         className="form-control" 
                         value={item.quantity} 
                         onChange={(e) =>
-                          handleItemChange(item.id, 'quantity', e.target.value, items, setItems)
+                          handleItemChange(item.id, 'quantity', e.target.value)
                         }
                         required 
                       />
@@ -144,7 +120,7 @@ function EstimateSheet({ user }) {
                         className="form-control" 
                         value={item.specification} 
                         onChange={(e) =>
-                          handleItemChange(item.id, 'specification', e.target.value, items, setItems)
+                          handleItemChange(item.id, 'specification', e.target.value)
                         }
                         placeholder="예: 개, kg, m 등"
                         required 
@@ -158,7 +134,7 @@ function EstimateSheet({ user }) {
                 <button 
                   type="button" 
                   className="btn btn-outline-primary"
-                  onClick={() => addItem(items, setItems)}
+                  onClick={addItem}
                 >
                   + 품목 추가
                 </button>
@@ -190,8 +166,8 @@ function EstimateSheet({ user }) {
               </div>
 
               <div className="d-flex justify-content-end">
-                <button className="btn btn-primary px-5" type="submit">
-                  견적 요청
+                <button className="btn btn-primary px-5" type="submit" disabled={loading}>
+                  {loading ? '요청 중...' : '견적 요청'}
                 </button>
               </div>
             </form>
