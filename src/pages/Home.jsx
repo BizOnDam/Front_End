@@ -1,35 +1,32 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useService } from '../contexts/ServiceContext';
+import { useAuth } from '../contexts/AuthContext';
 
-function Home({ user, setUser }) {
-  console.log('Home.jsx user:', user); // user prop 값 확인을 위한 console.log
+function Home() {
   const navigate = useNavigate();
+  const { switchToSupplier, switchToBuyer } = useService();
+  const { user, login } = useAuth();  // 전역 User
+  console.log('Home.jsx user:', user); // user prop 값 확인
 
   useEffect(() => {
-    if (user) {
-      setUser({
-        ...user,
-        role: null
-      });
+    // 초기 진입 시 role 초기화
+    if (user && user.role !== null) {
+      login({ ...user, role: null });
     }
   }, []);
 
+  // 전역 상태 supplier로 업데이트
   const handleSupplierClick = () => {
     console.log('공급업체 바로가기 클릭');
-    setUser({
-      ...user,
-      role: 'SUPPLIER'
-    });
+    switchToSupplier();   
     navigate('/supplier');
   };
-
+  // 전역 상태 buyer로 업데이트
   const handleBuyerClick = () => {
     console.log('수요업체 바로가기 클릭');
-    setUser({
-      ...user,
-      role: 'BUYER'
-    });
+    switchToBuyer();       
     navigate('/demand');
   };
 
