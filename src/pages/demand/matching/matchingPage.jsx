@@ -1,76 +1,21 @@
-import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Container, Card, Table, Badge, Button, Spinner } from 'react-bootstrap';
-import processMatchingData from './ProcessMatchingPage';
+import { Container, Card, Table, Button } from 'react-bootstrap';
+import { useMatchingData } from '../../../hooks/matching/useMatchingData';
+import { assignSupplier } from '../../../api/matchingApi';
+import LoadingOrError from '../../../components/LoadingOrError';
 
 const MatchingPage = () => {
   const navigate = useNavigate();
   const { requestId } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [matchingData, setMatchingData] = useState(null);
-
-  useEffect(() => {
-    const fetchMatchingData = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`/api/recommend/${requestId}`);
-        console.log('API Response:', response.data.data); // API 응답 데이터 확인
-        
-        // API 응답 데이터 구조 확인 및 변환
-        const apiData = response.data.data;
-        if (apiData) {
-          // API 응답 데이터를 processMatchingData가 기대하는 형식으로 변환
-          const formattedData = {
-            summary: apiData.summary || "",
-            commonSuppliers: apiData.commonSuppliers || [],
-            perItemSuppliers: apiData.perItemSuppliers || {}
-          };
-          console.log('Formatted Data:', formattedData); // 변환된 데이터 확인
-          setMatchingData(formattedData);
-          setError(null);
-        } else {
-          setError('데이터가 없습니다.');
-        }
-      } catch (err) {
-        console.error('매칭 데이터 조회 중 오류:', err);
-        if (err.response) {
-          // 서버가 응답을 반환한 경우
-          console.error('Error response:', err.response.data);
-          setError(err.response.data.message || '데이터를 불러오는 중 오류가 발생했습니다.');
-        } else if (err.request) {
-          // 요청이 전송되었지만 응답을 받지 못한 경우
-          console.error('Error request:', err.request);
-          setError('서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.');
-        } else {
-          // 요청 설정 중 오류가 발생한 경우
-          console.error('Error message:', err.message);
-          setError('요청을 처리하는 중 오류가 발생했습니다.');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (requestId) {
-      fetchMatchingData();
-    } else {
-      setError('요청 ID가 없습니다.');
-      setLoading(false);
-    }
-  }, [requestId]);
+  const { matchingData, loading, error } = useMatchingData(requestId);
 
   // 기업 선택 후 다음 페이지로
   const handleCompanySelect = async (companyName, businessNumber) => {
     try {
-      const response = await axios.patch(`http://localhost:8083/api/estimates/${requestId}/assign-supplier`, 
-      null,
-      { params: { businessNumber: businessNumber } }
-    );
+      const response = await assignSupplier(requestId, businessNumber);
 
-      if (response.data.success) {
+      if (response.success) {
         alert(`${companyName}에 견적 요청이 발송되었습니다!`);
         navigate('/estimateList');
       }
@@ -80,35 +25,14 @@ const MatchingPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Container className="py-5 text-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-        <p className="mt-3">데이터를 불러오는 중입니다...</p>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container className="py-5 text-center">
-        <Card className="border-danger">
-          <Card.Body>
-            <h4 className="text-danger">오류 발생</h4>
-            <p>{error}</p>
-          </Card.Body>
-        </Card>
-      </Container>
-    );
-  }
+  const loadingOrError = <LoadingOrError loading={loading} error={error} />;
+  if (loading || error) return loadingOrError;
 
   if (!matchingData) {
     return null;
   }
 
-  const { summary, companyDetails } = processMatchingData(matchingData);
+  const { summary, companyDetails } = matchingData;
 
   return (
     <Container className="py-4">
