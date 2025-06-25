@@ -1,22 +1,37 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const ServiceContext = createContext();
 
 export function ServiceProvider({ children }) {
-  const [serviceType, setServiceType] = useState(null); // 'SUPPLIER' 또는 'BUYER'
+  const [serviceType, setServiceType] = useState(null); // 'supplier' 또는 'buyer'
+
+  useEffect(() => {
+    const saved = localStorage.getItem('serviceType');
+    if (saved === 'supplier' || saved === 'buyer') {
+      setServiceType(saved);
+    }
+  }, []);
 
   const switchToSupplier = () => {
     console.log('서비스 타입을 supplier로 변경');
+    localStorage.setItem('serviceType', 'supplier'); 
     setServiceType('supplier');
   };
 
   const switchToBuyer = () => {
     console.log('서비스 타입을 buyer로 변경');
+    localStorage.setItem('serviceType', 'buyer'); 
     setServiceType('buyer');
   };
 
+  const resetServiceType = () => {
+  console.log('서비스 타입을 제거');
+  localStorage.removeItem('serviceType');
+  setServiceType(null);
+  };
+
   return (
-    <ServiceContext.Provider value={{ serviceType, switchToSupplier, switchToBuyer }}>
+    <ServiceContext.Provider value={{ serviceType, switchToSupplier, switchToBuyer, resetServiceType }}>
       {children}
     </ServiceContext.Provider>
   );

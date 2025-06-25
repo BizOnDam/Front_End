@@ -1,5 +1,10 @@
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
+// 페이지네이션 처리 함수
+export const paginate = (list, page, perPage) => {
+  return list.slice((page - 1) * perPage, page * perPage);
+};
+
 function Pagination({ currentPage, totalPages, onPageChange }) {
   return (
     <div className="d-flex justify-content-center mt-4">

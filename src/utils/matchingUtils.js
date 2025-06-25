@@ -1,43 +1,24 @@
-// 매칭 데이터 처리 함수
-const processMatchingData = (matchingData) => {
-  if (!matchingData) {
-    return {
-      summary: "데이터를 불러오는 중입니다.",
-      companyDetails: []
-    };
+export const processMatchingData = (matchingData) => {
+    if (!matchingData) {
+    console.log("매칭 데이터 없음. 로딩 중...");
+    return { summary: "데이터를 불러오는 중입니다.", companyDetails: [] };
   }
 
   const { summary, commonSuppliers, perItemSuppliers } = matchingData;
+  console.log("매칭 요약 정보:", summary);
+  console.log("공통 추천 기업:", commonSuppliers);
+  console.log("품목별 추천 기업:", perItemSuppliers);
 
-  // 공급업체 데이터 추출 및 정리
   let allSuppliers = [];
 
-  // commonSuppliers가 있는 경우
-  if (commonSuppliers && commonSuppliers.length > 0) {
+  if (commonSuppliers?.length > 0) {
     allSuppliers = commonSuppliers;
-  } 
-  // perItemSuppliers만 있는 경우
-  else if (perItemSuppliers) {
+  } else if (perItemSuppliers) {
     Object.values(perItemSuppliers).forEach(suppliers => {
-      if (suppliers && suppliers.length > 0) {
-        allSuppliers = [...allSuppliers, ...suppliers];
-      }
+      if (Array.isArray(suppliers)) allSuppliers.push(...suppliers);
     });
   }
 
-  // 공급업체가 없는 경우
-  if (allSuppliers.length === 0) {
-    return {
-      summary: summary || "추천 가능한 공급업체가 없습니다.",
-      topCompany: {
-        name: "데이터 없음",
-        businessNumber: ""
-      },
-      companyDetails: []
-    };
-  }
-
-  // 공급업체별로 데이터 그룹화
   const supplierGroups = allSuppliers.reduce((acc, supplier) => {
     const key = supplier.supplierBizno;
     if (!acc[key]) {
@@ -56,7 +37,6 @@ const processMatchingData = (matchingData) => {
     return acc;
   }, {});
 
-  // 기업별 상세 정보 구성
   const companyDetails = Object.values(supplierGroups).map(supplier => ({
     companyName: supplier.companyName,
     businessNumber: supplier.businessNumber,
@@ -68,10 +48,5 @@ const processMatchingData = (matchingData) => {
     }))
   }));
 
-  return {
-    summary,
-    companyDetails
-  };
+  return { summary, companyDetails };
 };
-
-export default processMatchingData; 

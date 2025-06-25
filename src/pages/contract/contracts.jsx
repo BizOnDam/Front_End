@@ -1,20 +1,19 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import Pagination from '../../components/Pagination';
+import { useAuth } from '../../contexts/AuthContext';
+import { useService } from '../../contexts/ServiceContext';
+import { useContracts } from '../../hooks/contract/useContracts';
 import ContractDetailModal from './ContractDetailModal';
-import { 
-  getEventsForDate, 
-  getSortedContracts, 
-  getPaginationData, 
+import Pagination from '../../components/Pagination';
+import {
+  getEventsForDate,
+  getSortedContracts,
+  getPaginationData,
   formatCurrency,
-  handleViewContract,
-  handleDownloadContract,
-  fetchContractDetail
-} from './ProcessContracts';
+} from '../../utils/contractUtils';
+import { fetchContractDetail } from '../../api/contractApi';
 
-// 달력 커스텀 스타일
 const calendarStyles = `
   .react-calendar__tile--now {
     background: #e3f2fd !important;
@@ -39,8 +38,11 @@ const calendarStyles = `
   }
 `;
 
-function Contracts({ userType, user }) {
-  const [contracts, setContracts] = useState([]);
+function Contracts() {
+  const { user } = useAuth();
+  const { serviceType } = useService();
+  const { contracts } = useContracts(user, serviceType);
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
   const [selectedContract, setSelectedContract] = useState(null);
@@ -49,78 +51,41 @@ function Contracts({ userType, user }) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState(null);
 
-  useEffect(() => {
-    const fetchContracts = async () => {
-      try {
-        console.log("보낼 params", { user });
-        const date = null; // 또는 selectedDate를 포맷팅해서 필터링
-        const response = await axios.get('http://localhost:8083/api/contracts/list', {
-          params: {
-            userId: user?.userId,
-            companyId: user?.companyId,
-            role: user?.role,
-            ...(date ? { date: date.toISOString().split('T')[0] } : {}),
-          },
-        });
-        console.log("계약 리스트 데이터:", response.data.data);
-
-        setContracts(response.data.data); // 혹시 응답 구조가 다르면 조정 필요
-      } catch (error) {
-        console.error('계약 정보 불러오기 실패:', error);
-        if (error.response) {
-          console.error("에러 응답 데이터:", error.response.data);
-          console.error("에러 상태 코드:", error.response.status);
-          console.error("에러 헤더:", error.response.headers);
-        }
-      }
-    };
-
-    fetchContracts();
-  }, [user, userType]);
-
-  // 달력 타일 렌더링 커스터마이징
-  const tileContent = ({ date }) => {
-    const events = getEventsForDate(date, contracts);
-    if (events.length > 0) {
-      return (
-        <div style={{ height: '10%'}}>
-          <div style={{ 
-            fontSize: '15px',
-            color: events[0].type === '계약체결' ? '#0d6efd' : '#198754',
-            fontWeight: 'bold'
-          }}>
-            ●
-            </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // 선택된 날짜의 이벤트 표시
   const selectedDateEvents = getEventsForDate(selectedDate, contracts);
+  const sortedContracts = getSortedContracts(contracts);
+  const { totalPages, currentContracts } = getPaginationData(sortedContracts, currentPage, itemsPerPage);
 
   const handleViewDetail = async (contract) => {
     setDetailLoading(true);
-    setDetailError(null);
     try {
       const detail = await fetchContractDetail(contract.requestId, contract.responseId);
       setSelectedContract(detail);
       setShowModal(true);
-    } catch (e) {
+    } catch {
       setDetailError('상세 정보를 불러오지 못했습니다.');
     } finally {
       setDetailLoading(false);
     }
   };
 
-  // 마감일 기준으로 정렬된 계약 목록
-  const sortedContracts = getSortedContracts(contracts);
-
-  // 페이지네이션 관련 계산
-  const { totalPages, currentContracts } = getPaginationData(sortedContracts, currentPage, itemsPerPage);
-
-  const handlePageChange = (pageNumber) => { setCurrentPage(pageNumber); };
+  // 달력에 점 찍는 함수
+  const tileContent = ({ date }) => {
+    const events = getEventsForDate(date, contracts);
+    if (events.length > 0) {
+      return (
+        <div style={{ height: '10%' }}>
+          <div style={{ 
+            fontSize: '15px',
+            color: events[0].type === '계약체결' ? '#0d6efd' : '#198754',
+            fontWeight: 'bold'
+          }}>
+            ●
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh' }}>
@@ -128,7 +93,7 @@ function Contracts({ userType, user }) {
       <div className="container py-4">
         <h2 className="mb-4">계약/납품 일정</h2>
 
-        {/* 1. 거래 일정 (달력) */}
+        {/* 달력 */}
         <div className="card shadow-sm mb-4">
           <div className="card-header bg-white">
             <h5 className="mb-0">거래 일정</h5>
@@ -147,7 +112,13 @@ function Contracts({ userType, user }) {
               <div className="col-md-4">
                 <div className="card">
                   <div className="card-header">
-                    <h6 className="mb-0">{selectedDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} 일정</h6>
+                    <h6 className="mb-0">
+                      {selectedDate.toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })} 일정
+                    </h6>
                   </div>
                   <div className="card-body">
                     {selectedDateEvents.length === 0 ? (
@@ -157,9 +128,7 @@ function Contracts({ userType, user }) {
                         {selectedDateEvents.map((event, index) => (
                           <li key={index} className="mb-2">
                             <div className="d-flex align-items-center">
-                              <span className={`badge bg-${
-                                event.type === '계약체결' ? 'primary' : 'success'
-                              } me-2`}>
+                              <span className={`badge bg-${event.type === '계약체결' ? 'primary' : 'success'} me-2`}>
                                 {event.type}
                               </span>
                               <span>{event.title}</span>
@@ -175,7 +144,7 @@ function Contracts({ userType, user }) {
           </div>
         </div>
 
-        {/* 2. 계약 목록 */}
+        {/* 테이블 */}
         <div className="card shadow-sm mb-4">
           <div className="card-body">
             <div className="table-responsive">
@@ -196,20 +165,14 @@ function Contracts({ userType, user }) {
                     <tr key={contract.contractId}>
                       <td>{contract.contractId}</td>
                       <td>{contract.supplierCompanyId}</td>
-                      <td>
-                        {contract.itemNames?.join(', ').length > 10 
-                        ? contract.itemNames.join(', ').substring(0, 10) + '...'
-                        : contract.itemNames.join(', ')}
-                      </td>
+                      <td>{contract.itemNames?.join(', ')}</td>
                       <td>{formatCurrency(contract.totalPrice)}</td>
                       <td>{contract.contractDate}</td>
                       <td>{contract.dueDate}</td>
                       <td>
-                        <div className="btn-group">
-                          <button className="btn btn-sm btn-outline-primary" onClick={() => handleViewDetail(contract)}>
-                            상세보기
-                          </button>
-                        </div>
+                        <button className="btn btn-sm btn-outline-primary" onClick={() => handleViewDetail(contract)}>
+                          상세보기
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -217,24 +180,16 @@ function Contracts({ userType, user }) {
               </table>
             </div>
 
-            {/* 페이지네이션 */}
             {totalPages > 1 && (
-              <Pagination 
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             )}
           </div>
         </div>
 
-        {/* 계약 상세 모달 */}
         <ContractDetailModal
           showModal={showModal}
           selectedContract={selectedContract}
           onClose={() => setShowModal(false)}
-          onViewContract={handleViewContract}
-          onDownloadContract={handleDownloadContract}
           loading={detailLoading}
           error={detailError}
         />
@@ -243,4 +198,4 @@ function Contracts({ userType, user }) {
   );
 }
 
-export default Contracts; 
+export default Contracts;
