@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../../api/authApi';
+import { useAuth } from '../../contexts/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Login() {
+  const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
   const [form, setForm] = useState({
     loginId: '',
     loginPwd: '',
@@ -31,18 +34,19 @@ function Login() {
       }
 
       // 로그인 성공 시 정보 저장
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      localStorage.setItem('userId', data.userId);
-      localStorage.setItem('loginId', data.loginId);
-      localStorage.setItem('username', data.username);
-      localStorage.setItem('companyId', data.companyId);
-      localStorage.setItem('companyNameKr', data.companyNameKr);
-      localStorage.setItem('roleInCompany', data.roleInCompany);
+      authLogin({
+        userId: data.userId,
+        loginId: data.loginId,
+        username: data.username,
+        companyId: data.companyId,
+        companyNameKr: data.companyNameKr,
+        roleInCompany: data.roleInCompany,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+      });
 
       alert('로그인 성공!');
-      window.location.href = '/'; // 로그인 후 이동할 경로
-
+      navigate('/'); // 로그인 후 이동할 경로
     } catch (error) {
       const msg = error.response?.data?.message || error.message || '로그인 중 오류 발생';
       console.error('로그인 실패:', msg);
@@ -83,7 +87,7 @@ function Login() {
             </div>
 
             <div className="form-check mb-3">
-              <input
+              {/* <input
                 className="form-check-input"
                 type="checkbox"
                 id="rememberMe"
@@ -93,7 +97,7 @@ function Login() {
               />
               <label className="form-check-label" htmlFor="rememberMe">
                 로그인 상태 유지
-              </label>
+              </label> */}
             </div>
 
             <button type="submit" className="btn btn-primary w-100">로그인</button>
