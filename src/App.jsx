@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
-import Login from './pages/sign/Login'
+import Login from './pages/sign/login'
 import RegisterStep1 from './pages/sign/RegisterStep1'
 import RegisterStep2 from './pages/sign/RegisterStep2'
 import RegisterStep3 from './pages/sign/RegisterStep3'
