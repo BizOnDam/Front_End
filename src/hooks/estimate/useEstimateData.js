@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axiosInstance from '../../api/axiosInstance';
+import { axiosInstance } from '../../api/axiosInstance';
 import { mapFlatToNested } from '../../utils/estimateTransform';
 import { useAuth }    from '../../contexts/AuthContext';
 import { useService } from '../../contexts/ServiceContext';

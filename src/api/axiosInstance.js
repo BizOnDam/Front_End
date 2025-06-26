@@ -3,7 +3,14 @@ import axios from 'axios';
 // VITE_API_SERVER_URL
 // VITE_API_LOCAL_URL
 
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_SERVER_URL, // Gateway 주소
+  withCredentials: true,  // 쿠키 포함
+  timeout: 30000, // 30초 제한
+});
+
+// 헤더 x
+export const axiosSignInstance = axios.create({
   baseURL: import.meta.env.VITE_API_SERVER_URL, // Gateway 주소
   withCredentials: true,  // 쿠키 포함
   timeout: 30000, // 30초 제한
@@ -61,5 +68,3 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-export default axiosInstance;

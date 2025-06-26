@@ -1,4 +1,4 @@
-import axiosInstance from './axiosInstance';
+import { axiosInstance } from './axiosInstance';
 
 export const fetchMatchingData = async (requestId, accessToken) => {
   console.log('▶ fetchMatchingData ccessToken:', accessToken); // 토큰 확인용 로그

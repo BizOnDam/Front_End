@@ -7,7 +7,7 @@ import { useDashboardStats } from '../../hooks/dashboard/useDashboardStats';
 import { useEstimateData } from '../../hooks/estimate/useEstimateData';
 import { useContracts } from '../../hooks/contract/useContracts';
 import { useContractHistory } from '../../hooks/contract/useContractHistory';
-import { formatCurrency } from '../../utils/contractUtils';
+import { formatDateToYYYYMMDD, formatCurrency } from '../../utils/dateUtils';
 import { ESTIMATE_STATUS } from '../../constants/estimateStatus';
 import LoadingOrError from '../../components/LoadingOrError'; 
 
@@ -27,32 +27,45 @@ const Dashboard = () => {
   .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   .slice(0, 3); // 상위 3개만
 
-  // 진행중 계약만 필터링
+  // 진행중인 계약만 필터링
   const currentContracts = (contracts || [])
     .slice(0, 3); // 상위 3개만
 
     // 최근 견적 이력 필터링
-  const recentContracts = [...historyData]
-  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  .slice(0, 3); // 상위 3개만
+  const recentContracts = Array.isArray(historyData) 
+    ? [...historyData]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 3) // 상위 3개만
+    : [];
 
   const maxRows = 3;
-  const emptyRows = Array(maxRows - recentEstimates.length).fill(null);
-  const emptyContractRows = Array(maxRows - currentContracts.length).fill(null);
-  const emptyHistoryRows = Array(maxRows - recentContracts.length).fill(null);
-
-  // 공급기업 (상위 3개만, 평가점수 높은순)
   const suppliersToShow = getTopSuppliers(maxRows);
 
   // 로딩 또는 에러 처리
   const isLoading = loading || estimateLoading || historyLoading;
   const hasError = error || estimateError || historyError;
-  const loadingOrError = <LoadingOrError loading={isLoading} error={hasError} />;
-  if (isLoading || hasError) return loadingOrError;
+  
+  // 에러나 로딩 상태에서도 UI를 보여주기 위해 기본값 설정
+  const safeStats = stats || {
+    totalContracts: 0,
+    inProgressContracts: 0,
+    completedContracts: 0,
+    pendingEstimates: 0
+  };
 
   return (
     <div className="container-fluid py-4">
-      <h2 className="mb-4">{serviceType === 'supplier' ? '공급' : '수요'} 서비스 대시보드</h2>
+      <h2 className="mb-4">
+        {serviceType === 'supplier' ? '공급' : '수요'} 서비스 대시보드
+        <span className="text-muted ms-2" style={{ fontSize: '0.5em', fontWeight: 'normal' }}>{user?.companyNameKr || '기업'}</span>
+      </h2>
+      
+      {/* 로딩/에러 상태 표시 */}
+      {(isLoading || hasError) && (
+        <div className="alert alert-info mb-4">
+          {isLoading ? '데이터를 불러오는 중입니다...' : '일부 데이터를 불러올 수 없습니다.'}
+        </div>
+      )}
       
       {/* 전체 거래 현황 */}
       <div className="card mb-4">
@@ -60,20 +73,20 @@ const Dashboard = () => {
           <h5 className="card-title mb-4">전체 거래 현황</h5>
           <div className="row text-center">
             <div className="col-md-3">
-              <h3 className="text-primary">{stats?.totalContracts ?? 0}</h3>
+              <h3 className="text-primary">{safeStats.totalContracts}</h3>
               <p className="text-muted">전체 거래 건수</p>
             </div>
             <div className="col-md-3">
-              <h3 className="text-success">{stats?.inProgressContracts ?? 0}</h3>
+              <h3 className="text-success">{safeStats.inProgressContracts}</h3>
               <p className="text-muted">진행중인 계약</p>
             </div>
             <div className="col-md-3">
-              <h3 className="text-warning">{stats?.pendingEstimates ?? 0}</h3>
-              <p className="text-muted">대기중인 견적</p>
+              <h3 className="text-info">{safeStats.completedContracts}</h3>
+              <p className="text-muted">완료된 납품</p>
             </div>
             <div className="col-md-3">
-              <h3 className="text-info">{stats?.completedContracts ?? 0}</h3>
-              <p className="text-muted">완료된 납품</p>
+              <h3 className="text-warning">{safeStats.pendingEstimates}</h3>
+              <p className="text-muted">대기중인 견적</p>
             </div>
           </div>
         </div>
@@ -145,24 +158,25 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {recentEstimates.map(quote => (
-                  <tr key={quote.request.request_id}>
-                    <td>{quote.request.request_id}</td>
-                    <td>{quote.request.detail}</td>
-                    <td>{quote.request.created_at}</td>
-                    <td>{quote.request.due_date}</td>
-                    <td>
-                      <span className={`badge bg-${ESTIMATE_STATUS[quote.request.status]?.badgeColor || 'secondary'}`}>
-                        {ESTIMATE_STATUS[quote.request.status]?.label || '알수없음'}
-                      </span>
-                    </td>
+                {Array.isArray(recentEstimates) && recentEstimates.length > 0 ? (
+                  recentEstimates.map(quote => (
+                    <tr key={quote.request.request_id}>
+                      <td>{quote.request.request_id}</td>
+                      <td>{quote.request.detail}</td>
+                      <td>{formatDateToYYYYMMDD(quote.request.created_at)}</td>
+                      <td>{formatDateToYYYYMMDD(quote.request.due_date)}</td>
+                      <td>
+                        <span className={`badge bg-${ESTIMATE_STATUS[quote.request.status]?.badgeColor || 'secondary'}`}>
+                          {ESTIMATE_STATUS[quote.request.status]?.label || '알수없음'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center text-muted">견적 데이터가 없습니다.</td>
                   </tr>
-                ))}
-                {emptyRows.map((_, index) => (
-                  <tr key={`empty-${index}`}>
-                    <td colSpan="5" className="text-center text-muted">-</td>
-                  </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -189,7 +203,8 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentContracts.map(contract => (
+                {Array.isArray(currentContracts) && currentContracts.length > 0 ? (
+                  currentContracts.map(contract => (
                     <tr key={contract.contractId}>
                       <td>{contract.contractId}</td>
                       <td>{contract.supplierCompanyId}</td>
@@ -199,15 +214,15 @@ const Dashboard = () => {
                         : contract.itemNames.join(', ')}
                       </td>
                       <td>{formatCurrency(contract.totalPrice)}</td>
-                      <td>{contract.contractDate}</td>
+                      <td>{formatDateToYYYYMMDD(contract.contractDate)}</td>
                       <td>{contract.dueDate}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="text-center text-muted">진행중인 계약이 없습니다.</td>
                   </tr>
-                ))}
-                {emptyContractRows.map((_, index) => (
-                  <tr key={`empty-contract-${index}`}>
-                    <td colSpan="6" className="text-center text-muted">-</td>
-                  </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -232,19 +247,20 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {recentContracts.map(history => (
-                  <tr key={history.contractId}>
-                    <td>{history.contractId}</td>
-                    <td>{history.details}</td>
-                    <td>{history.contractDate}</td>
-                    <td>{history.totalPrice}</td>
+                {Array.isArray(recentContracts) && recentContracts.length > 0 ? (
+                  recentContracts.map(history => (
+                    <tr key={history.contractId}>
+                      <td>{history.contractId}</td>
+                      <td>{history.details}</td>
+                      <td>{formatDateToYYYYMMDD(history.contractDate)}</td>
+                      <td>{formatCurrency(history.totalPrice)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="text-center text-muted">거래 이력이 없습니다.</td>
                   </tr>
-                ))}
-                {emptyHistoryRows.map((_, index) => (
-                  <tr key={`empty-history-${index}`}>
-                    <td colSpan="5" className="text-center text-muted">-</td>
-                  </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

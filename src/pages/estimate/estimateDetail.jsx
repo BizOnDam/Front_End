@@ -1,11 +1,13 @@
 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEstimateDetail } from '../../hooks/estimate/useEstimateDetail';
-import { rejectEstimate, acceptEstimate } from '../../api/estimateApi';
+import { rejectEstimate } from '../../api/estimateApi';
+import { generateContract } from '../../api/contractApi';
 import { useAuth }    from '../../contexts/AuthContext';
 import { useService } from '../../contexts/ServiceContext';
 import { ESTIMATE_STATUS } from '../../constants/estimateStatus';
-import { formatCurrency, findMatchingRequestItem } from '../../utils/estimateTransform';
+import { findMatchingRequestItem } from '../../utils/estimateTransform';
+import { formatDateToYYYYMMDD, formatCurrency } from '../../utils/dateUtils';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const EstimateDetail = () => {
@@ -33,8 +35,8 @@ const EstimateDetail = () => {
   const handleAccept = async () => {
     if (window.confirm('계약을 수락하겠습니까?')) {
       try {
-        await acceptEstimate(requestId);
-        navigate(`/estimateList?companyId=${user?.companyId}`); // 계약 체결 페이지로 넘기기
+        await generateContract(requestId, responseId);
+        navigate(`/contracts`);
       } catch (error) {
         alert(`견적 수락에 실패했습니다: ${error.message}`);
       }
@@ -102,12 +104,12 @@ const EstimateDetail = () => {
                 </span>
               </div>
               <div className="col-md-6">
-                <strong>납품 기한:</strong> {request.due_date || '-'}
+                <strong>납품 기한:</strong> {formatDateToYYYYMMDD(request.due_date) || '-'}
               </div>
             </div>
             <div className="row mb-2">
               <div className="col-md-6">
-                <strong>생성일시:</strong> {request.created_at || '-'}
+                <strong>요청일시:</strong> {formatDateToYYYYMMDD(request.created_at) || '-'}
               </div>
               <div className="col-md-6">
                 <strong>상세 설명:</strong> {request.detail || '-'}
@@ -211,7 +213,7 @@ const EstimateDetail = () => {
                 </div>
                 <div className="row mb-2">
                   <div className="col-md-6">
-                    <strong>응답 생성일시:</strong> {response.created_at || '-'}
+                    <strong>응답 생성일시:</strong> {formatDateToYYYYMMDD(response.created_at) || '-'}
                   </div>
                 </div>
               </div>

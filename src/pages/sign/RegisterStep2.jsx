@@ -2,7 +2,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { ProcessRegisterStep2 } from './ProcessRegisterStep2';
-import SignNavbar from '../../components/SignNavbar';
+import AppNavbar from '../../components/AppNavbar';
 import Footer from '../../components/Footer';
 
 function RegisterStep2() {
@@ -98,7 +98,7 @@ function RegisterStep2() {
 
   return (
     <div>
-      <SignNavbar/>
+      <AppNavbar/>
 
       {/* Main Content */}
       <div style={{ backgroundColor: '#e9eff6', minHeight: 'calc(100vh - 56px)' }}>

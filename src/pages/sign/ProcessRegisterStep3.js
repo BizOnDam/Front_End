@@ -1,24 +1,24 @@
-import { safeFetchJson, handleApiError } from '../../utils/api';
+import { axiosSignInstance } from '../../api/axiosInstance';
 
 // 아이디 중복 확인
 export async function checkIdDuplicate(loginId, setError, setIsIdVerified, setForm) {
   if (!loginId) return setError('회원아이디를 입력해 주세요.');
-  if (!/^[a-z0-9]{6,15}$/.test(loginId))
-    return setError('회원아이디는 영문 소문자와 숫자 조합으로 6 ~ 15자 입력해 주세요.');
+  if (!/^[a-zA-Z0-9]{6,15}$/.test(loginId))
+    return setError('회원아이디는 영문과 숫자 조합으로 6 ~ 15자 입력해 주세요.');
 
-  try {
-    const { data } = await safeFetchJson(
-      `http://localhost:8081/user-service/api/users/check-login-id?loginId=${loginId}`
+   try {
+    const res = await axiosSignInstance.get(
+      `/user-service/api/users/check-login-id?loginId=${loginId}`
     );
 
-    const isDuplicated = data.data === true;
+    const isDuplicated = res.data.data === true;
     setIsIdVerified(!isDuplicated);
     setForm(prev => ({ ...prev, isIdVerified: !isDuplicated }));
-    alert(data.message);
+    alert(res.data.message);
     setError('');
     return !isDuplicated;
   } catch (err) {
-    handleApiError(err, setError, '아이디 중복확인 중 오류가 발생했습니다.');
+    setError(err.response?.data?.message || '아이디 중복확인 중 오류가 발생했습니다.');
     setIsIdVerified(false);
     setForm(prev => ({ ...prev, isIdVerified: false }));
     return false;
@@ -33,7 +33,7 @@ export async function sendVerificationCode(authProvider, phoneNumber, email, set
 
     switch (authProvider) {
       case 'EMAIL':
-        endpoint = 'http://localhost:8081/user-service/api/users/email-auth';
+        endpoint = '/user-service/api/users/email-auth';
         body = { email };
         break;
       case 'PHONE':
@@ -47,13 +47,13 @@ export async function sendVerificationCode(authProvider, phoneNumber, email, set
     }
 
     setIsSendingCode(true);
-    const { data } = await safeFetchJson(endpoint, 'POST', body);
+    const res = await axiosSignInstance.post(endpoint, body);
     setIsCodeSent(true);
-    alert(data.message || '인증번호가 발송되었습니다.');
+    alert(res.data.message || '인증번호가 발송되었습니다.');
     return true;
   } catch (err) {
     setIsCodeSent(false);
-    handleApiError(err, setError, '인증번호 발송 중 오류가 발생했습니다.');
+    setError(err.response?.data?.message || '인증번호 발송 중 오류가 발생했습니다.');
     return false;
   } finally {
     setIsSendingCode(false);
@@ -68,7 +68,7 @@ export async function verifyCode(authProvider, phoneNumber, email, verifyCode, s
 
     switch (authProvider) {
       case 'EMAIL':
-        endpoint = 'http://localhost:8081/user-service/api/users/email-auth/verify';
+        endpoint = '/user-service/api/users/email-auth/verify';
         body = { email, code: verifyCode };
         break;
       case 'PHONE':
@@ -82,16 +82,17 @@ export async function verifyCode(authProvider, phoneNumber, email, verifyCode, s
         return false;
     }
 
+
     setIsVerifying(true);
-    const { data } = await safeFetchJson(endpoint, 'POST', body);
+    const res = await axiosSignInstance.post(endpoint, body);
     setIsVerified(true);
     setForm(prev => ({ ...prev, isVerified: true }));
-    alert(data.message || '인증이 완료되었습니다.');
+    alert(res.data.message || '인증이 완료되었습니다.');
     return true;
   } catch (err) {
     setIsVerified(false);
     setForm(prev => ({ ...prev, isVerified: false }));
-    handleApiError(err, setError, '인증 확인 중 오류가 발생했습니다.');
+    setError(err.response?.data?.message || '인증 확인 중 오류가 발생했습니다.');
     return false;
   } finally {
     setIsVerifying(false);
@@ -153,15 +154,14 @@ export async function ProcessRegisterStep3(form, setError, setLoading, onSuccess
 
   setLoading(true);
   try {
-    const { data } = await safeFetchJson(
-      'http://localhost:8081/user-service/api/users/register',
-      'POST',
+    const res = await axiosSignInstance.post(
+      '/user-service/api/users/register',
       requestBody
     );
 
-    onSuccess(data);
+    onSuccess(res.data);
   } catch (err) {
-    handleApiError(err, setError, '회원가입 중 오류가 발생했습니다.');
+    setError(err.response?.data?.message || '회원가입 중 오류가 발생했습니다.');
   } finally {
     setLoading(false);
   }

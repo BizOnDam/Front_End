@@ -65,15 +65,6 @@ export function transformEstimateData(data) {
       }))
   };
 };
-// 화폐 포맷
-export const formatCurrency = amount => {
-  return amount != null
-    ? new Intl.NumberFormat('ko-KR', { 
-        style: 'currency', 
-        currency: 'KRW' 
-    }).format(amount)
-    : '-';
-};
 
 // 아이템
 export const findMatchingRequestItem = (items, responseItem) => {

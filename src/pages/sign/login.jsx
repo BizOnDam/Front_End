@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { login } from '../../api/authApi';
-import axios from 'axios';
+import { login as loginApi } from '../../api/authApi';
+import { useAuth } from '../../contexts/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Login() {
@@ -12,6 +12,8 @@ function Login() {
     rememberMe: false,
   });
 
+  const { login } = useAuth(); 
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
@@ -19,42 +21,33 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('▶ 로그인 시도:', form);
+    console.log('Login.jsx 로그인 시도:', form);
     try {
-      console.log("try");
-      // const response = await axios.post('http://localhost:8080/user-service/api/auth/login'
-        const response = await axios.post('http://localhost:8081/api/auth/login'
-        // const response = await axios.get('https://jsonplaceholder.typicode.com/todos/1'  
-    //      loginId: "yungga",
-    //     loginPwd: "qwer1234!",
-    ).then ( (r) => {
-      console.log("type of:", typeof(r));
-    }).catch((c) => {
-      console.log("c", c);
-    })
-      // const data = await login({
-      //   loginId: form.loginId,
-      //   loginPwd: form.loginPwd,
-      // });
-      // const { data } = response; // 응답 본문 추출
-      // console.log('▶ 로그인 응답:', data);
+      const { success, message, data } = await loginApi({
+        loginId: form.loginId,
+        loginPwd: form.loginPwd,
+        // loginPwd: 'qwer1234!',
+      });
+      console.log('Login.jsx 로그인 응답:', { success, message, data });
     
-      // if (!data.success) {
-      //   throw new Error(data.message || '로그인 실패');
-      // }
+      if (!success) {
+        throw new Error(message || '로그인 실패');
+      }
 
-      // // 로그인 성공 시 정보 저장
-      // localStorage.setItem('accessToken', data.data.accessToken);
-      // localStorage.setItem('refreshToken', data.data.refreshToken);
-      // localStorage.setItem('userId', data.data.userId);
-      // localStorage.setItem('loginId', data.data.loginId);
-      // localStorage.setItem('username', data.data.username);
-      // localStorage.setItem('companyId', data.data.companyId);
-      // localStorage.setItem('companyNameKr', data.data.companyNameKr);
-      // localStorage.setItem('roleInCompany', data.data.roleInCompany);
-  
-      // alert('로그인 성공!');
-      // window.location.href = '/'; // 로그인 후 이동할 경로
+      // 전역 상태 + localStorage에 저장
+      login({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        userId: data.userId,
+        loginId: data.loginId,
+        username: data.username,
+        companyId: data.companyId,
+        companyNameKr: data.companyNameKr,
+        roleInCompany: data.roleInCompany,
+      });
+
+      alert('로그인 성공!');
+      window.location.href = '/'; // 로그인 후 이동할 경로
   
     } catch (error) {
       const msg = error.response?.data?.message || error.message || '로그인 중 오류 발생';
@@ -77,8 +70,7 @@ function Login() {
             type="text"
             className="form-control"
             name="loginId"
-            value="yungga"
-            // value={form.username}
+            value={form.loginId}
             onChange={handleChange}
             placeholder="가입한 아이디"
             required
@@ -91,15 +83,15 @@ function Login() {
             type="password"
             className="form-control"
             name="loginPwd"
-            value="qwer1234!"
-            // value={form.password}
+            // value="qwer1234!"
+            value={form.loginPwd}
             onChange={handleChange}
             required
           />
         </div>
 
         <div className="form-check mb-3">
-          <input
+          {/* <input
             className="form-check-input"
             type="checkbox"
             id="rememberMe"
@@ -109,7 +101,7 @@ function Login() {
           />
           <label className="form-check-label" htmlFor="rememberMe">
             로그인 상태 유지
-          </label>
+          </label> */}
         </div>
 
         <button type="submit" className="btn btn-primary w-100">로그인</button>
