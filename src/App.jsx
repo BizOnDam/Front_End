@@ -25,7 +25,7 @@ function App() {
   console.log("App.jsx user", user);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/Front_End">
       <Routes>
         <Route path="/" element={<CommonLayout><Home /></CommonLayout>} />
         <Route path="/login" element={<CommonLayout><Login /></CommonLayout>} />
