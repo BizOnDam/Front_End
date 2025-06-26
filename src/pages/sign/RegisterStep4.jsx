@@ -1,6 +1,5 @@
-import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import SignNavbar from '../../components/SignNavbar';
+import AppNavbar from '../../components/AppNavbar';
 import Footer from '../../components/Footer';
 
 function RegisterStep4() {
@@ -8,7 +7,7 @@ function RegisterStep4() {
 
   return (
     <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <SignNavbar/>
+      <AppNavbar/>
       {/* Main Content */}
       <div style={{ flex: 1 }}>
         <div className="container py-5" style={{ maxWidth: '800px' }}>

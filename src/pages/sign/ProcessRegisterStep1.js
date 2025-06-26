@@ -1,3 +1,5 @@
+import { axiosSignInstance } from '../../api/axiosInstance';
+
 export async function ProcessRegisterStep1(form, setError, setLoading, onSuccess) {
   // 유효성 검사
   if (!/^\d{10}$/.test(form.bizNumber)) {
@@ -31,21 +33,24 @@ export async function ProcessRegisterStep1(form, setError, setLoading, onSuccess
       b_nm: form.companyName,
     };
     
-    const res = await fetch('http://localhost:8082/company-service/api/companies/validate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    const res = await axiosSignInstance.post(
+      '/company-service/api/companies/validate',
+      payload
+    );
+  
+    const data = res.data;
     
-    if (!res.ok) throw new Error('서버 오류가 발생했습니다.');
-    const data = await res.json();
+    // 디버깅을 위한 응답 데이터 출력
+    console.log('API Response:', data);
+    console.log('validBusinessNumber:', data.data?.validBusinessNumber);
+    console.log('alreadyRegistered:', data.data?.alreadyRegistered);
     
-    if (!data.validBusinessNumber) {
+    if (!data.data?.validBusinessNumber) {
       setError('사업자정보를 다시 확인해 주세요.');
       return;
     }
 
-    if (data.validBusinessNumber && data.alreadyRegistered) {
+    if (data.data?.validBusinessNumber && data.data?.alreadyRegistered) {
       onSuccess({ 
         success: true, 
         redirectTo: 'RegisterStep3',
@@ -54,16 +59,16 @@ export async function ProcessRegisterStep1(form, setError, setLoading, onSuccess
           startDate: form.startDate,
           ceoName: form.ceoName,
           companyName: form.companyName,
-          companyId: data.companyId 
+          companyId: data.data.companyId 
         },
-        message: data.message
+        message: data.data.message
       });
-    } else if (data.validBusinessNumber && !data.alreadyRegistered) {
+    } else if (data.data?.validBusinessNumber && !data.data?.alreadyRegistered) {
       onSuccess({ 
         success: true, 
         redirectTo: 'RegisterStep2',
         data: form,
-        message: data.message
+        message: data.data.message
       });
     }
   } catch (err) {

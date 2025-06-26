@@ -1,3 +1,5 @@
+import { axiosSignInstance } from '../../api/axiosInstance';
+
 export async function ProcessRegisterStep2(form, setError, setLoading, onSuccess) {
   setError('');
 
@@ -46,13 +48,12 @@ export async function ProcessRegisterStep2(form, setError, setLoading, onSuccess
       businessType: form.businessType
     };
 
-    const res = await fetch('http://localhost:8082/company-service/api/companies/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-    });
+    const res = await axiosSignInstance.post(
+      '/company-service/api/companies/register',
+      requestBody
+    );
 
-    const response = await res.json();
+    const response = res.data;
     
     if (!response.success) {
       throw new Error(response.message || '저장에 실패했습니다.');

@@ -6,13 +6,9 @@ import { useService } from '../../contexts/ServiceContext';
 import { useContracts } from '../../hooks/contract/useContracts';
 import ContractDetailModal from './ContractDetailModal';
 import Pagination from '../../components/Pagination';
-import {
-  getEventsForDate,
-  getSortedContracts,
-  getPaginationData,
-  formatCurrency,
-} from '../../utils/contractUtils';
+import { getEventsForDate, getSortedContracts, getPaginationData, } from '../../utils/contractUtils';
 import { fetchContractDetail } from '../../api/contractApi';
+import { formatCurrency } from '../../utils/dateUtils';
 
 const calendarStyles = `
   .react-calendar__tile--now {
@@ -57,6 +53,7 @@ function Contracts() {
 
   const handleViewDetail = async (contract) => {
     setDetailLoading(true);
+    console.log("handleViewDetail", contract);
     try {
       const detail = await fetchContractDetail(contract.requestId, contract.responseId);
       setSelectedContract(detail);
@@ -126,7 +123,17 @@ function Contracts() {
                     ) : (
                       <ul className="list-unstyled">
                         {selectedDateEvents.map((event, index) => (
-                          <li key={index} className="mb-2">
+                          <li
+                            key={index}
+                            className="mb-2"
+                            role="button"
+                            onClick={() => {
+                              const matched = contracts.find(c => c.contractId === event.contractId);
+                              console.log("requestId:", matched?.requestId);
+                              console.log("responseId:", matched?.responseId);
+                              if (matched) handleViewDetail(matched);
+                            }}
+                          >
                             <div className="d-flex align-items-center">
                               <span className={`badge bg-${event.type === '계약체결' ? 'primary' : 'success'} me-2`}>
                                 {event.type}

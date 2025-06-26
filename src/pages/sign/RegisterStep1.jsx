@@ -8,7 +8,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { registerLocale } from 'react-datepicker';
 import ko from 'date-fns/locale/ko';
 import profileImg from '../../assets/profile.png';
-import SignNavbar from '../../components/SignNavbar';
+import AppNavbar from '../../components/AppNavbar';
 import Footer from '../../components/Footer';
 
 // 한국어 로케일 등록
@@ -102,7 +102,7 @@ function RegisterStep1() {
 
   return (
     <div>
-      <SignNavbar/>
+      <AppNavbar/>
 
       <div style={{ backgroundColor: '#e9eff6', minHeight: 'calc(100vh - 56px)' }}>
         <div className="container py-5" style={{ maxWidth: '700px' }}>
@@ -126,10 +126,23 @@ function RegisterStep1() {
           <div className="bg-white rounded shadow-sm p-4 mb-4">
             <div className="mb-3">
               <div className="fw-bold mb-2">이용약관</div>
-              <div className="border rounded p-2 mb-2" style={{ background: '#f8f9fa', height: '100px', overflowY: 'auto' }}>
+              <div className="border rounded p-2 mb-2" style={{ background: '#f8f9fa', height: '200px', overflowY: 'auto' }}>
                 <span className="text-primary">이용약관(필수)</span><br />
-                제 1조 목적<br />
-                1. 이 약관은 ~~~~
+                <strong>제1조 (목적)</strong><br />
+                본 약관은 BizOnDam(이하 '서비스')이 제공하는 모든 기업회원 서비스의 이용 조건, 절차 및 권리·의무 사항을 규정함을 목적으로 합니다.<br/><br />
+                
+                <strong>제2조 (회원 가입)</strong><br />
+                기업회원은 본인의 사업자 등록정보를 기반으로 가입하며, 가입 시 제공된 정보는 정확하고 사실이어야 합니다.<br/><br />
+                
+                <strong>제3조 (서비스의 제공 및 변경)</strong><br />
+                서비스는 기업 간 견적 요청, 응답, 계약 체결 등의 기능을 제공하며, 기술적 사유로 내용이 변경될 수 있습니다.<br/><br />
+                
+                <strong>제4조 (회원의 의무)</strong><br />
+                회원은 서비스를 이용함에 있어 관계 법령 및 약관을 준수하여야 하며, 타인의 권리를 침해해서는 안 됩니다.<br/><br />
+                
+                <strong>제5조 (계정관리 및 해지)</strong><br />
+                모든 회원은 자신의 계정 정보를 관리하고, 부정 사용 방지를 위해 비밀번호 등의 정보는 안전하게 보관해야 합니다.<br/>
+                대표자는 소속 직원의 계정 이용을 제한하거나 해지할 수 있는 권한을 가집니다.<br/>
               </div>
               <div className="form-check">
                 <input className="form-check-input" type="checkbox" id="agreeTerms" checked={agreeTerms} onChange={handleAgreeTerms} />
@@ -138,10 +151,22 @@ function RegisterStep1() {
             </div>
             <div className="mb-3">
               <div className="fw-bold mb-2">개인정보취급방침</div>
-              <div className="border rounded p-2 mb-2" style={{ background: '#f8f9fa', height: '80px', overflowY: 'auto' }}>
-                <span className="text-primary">개인정보 취급방침</span><br />
-                비즈온담은 ~
-              </div>
+                <div className="border rounded p-2 mb-2" style={{ background: '#f8f9fa', height: '200px', overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
+                <span className="text-primary"><strong>개인정보 수집 및 이용 동의(필수)</strong></span><br />
+                    BizOnDam은 기업회원 가입 및 서비스 이용을 위해 다음과 같은 개인정보를 수집합니다.<br /><br />
+                    <strong>1. 수집 항목</strong><br />
+                    - 회사 정보: 사업자등록번호, 회사명, 대표자명, 주소 등<br />
+                    - 사용자 정보: 이름, 부서, 직책, 연락처(휴대전화), 이메일, 로그인 ID, 비밀번호<br /><br />
+
+                    <strong>2. 수집 목적</strong><br />
+                    - 회원가입 및 본인확인<br />
+                    - 기업 간 견적 요청 및 응답 등 서비스 제공<br />
+                    - 계약 및 납품 이력 관리<br />
+                    - 민원처리 및 고객지원<br /><br />
+
+                    <strong>3. 보유 및 이용기간</strong><br />
+                    - 회원 탈퇴 시까지 (단, 관련 법령에 따라 보존할 필요가 있는 경우 해당 기간까지)
+                </div>
               <div className="form-check">
                 <input className="form-check-input" type="checkbox" id="agreePrivacy" checked={agreePrivacy} onChange={handleAgreePrivacy} />
                 <label className="form-check-label" htmlFor="agreePrivacy">위의 개인정보 취급 방침에 동의합니다.</label>

@@ -1,5 +1,5 @@
 // 서버 호출 함수
-import axiosInstance from '../api/axiosInstance';
+import { axiosInstance } from '../api/axiosInstance';
 import { transformEstimateData } from '../utils/estimateTransform';
 
 // 상세 조회
@@ -23,17 +23,16 @@ export const rejectEstimate = async (requestId, role, userId) => {
   }
 };
 
-// 견적 수락
-export const acceptEstimate = async (requestId) => {
-  await axiosInstance.patch(`/estimate-service/api/estimates/${requestId}/accept`);
-};
+// // 견적 수락
+// export const acceptEstimate = async (requestId) => {
+//   await axiosInstance.patch(`/estimate-service/api/estimates/${requestId}/accept`);
+// };
 
 // 품목 조회
 export const fetchCategories = async () => {
   const res = await axiosInstance.get(`/estimate-service/api/product-meta/categories`);
   return res.data;
 };
-
 
 // 세부 품목 조회
 export const fetchDetailCategories = async (categoryName) => {

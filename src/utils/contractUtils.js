@@ -1,13 +1,32 @@
+import { formatDateToYYYYMMDD } from './dateUtils';
+
 // 날짜별 계약 이벤트 추출
 export const getEventsForDate = (date, contracts) => {
   if (!contracts || !Array.isArray(contracts)) return [];
-  const target = date.toISOString().split('T')[0];
-  return contracts.filter(c => c.dueDate === target || c.contractDate === target)
-    .map(c => ({
-      title: c.itemNames?.join(', '),
-      type: c.trackingNumber ? '계약체결' : '진행중'
-    }));
+  const target = formatDateToYYYYMMDD(date);
+
+  const events = [];
+
+  contracts.forEach(c => {
+    if (c.contractDate === target) {
+      events.push({
+        contractId: c.contractId,
+        title: c.itemNames?.join(', '),
+        type: '계약체결'
+      });
+    }
+    if (c.dueDate === target) {
+      events.push({
+        contractId: c.contractId,
+        title: c.itemNames?.join(', '),
+        type: '납품기한'
+      });
+    }
+  });
+
+  return events;
 };
+
 
 // 납기 기준 정렬
 export const getSortedContracts = (contracts) => {
@@ -26,9 +45,3 @@ export const getPaginationData = (list, currentPage, itemsPerPage) => {
   const currentContracts = list.slice(offset, offset + itemsPerPage);
   return { totalPages, currentContracts };
 };
-
-// 금액 포맷
-export const formatCurrency = (amount) =>
-  amount != null
-    ? new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(amount)
-    : '-';

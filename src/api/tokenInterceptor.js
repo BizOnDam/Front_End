@@ -1,4 +1,4 @@
-import axiosInstance from './axiosInstance';
+import { axiosInstance } from './axiosInstance';
 
 export function setupTokenInterceptor() {
 axiosInstance.interceptors.response.use(

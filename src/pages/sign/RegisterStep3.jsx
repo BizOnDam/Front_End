@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { checkIdDuplicate, sendVerificationCode, verifyCode, ProcessRegisterStep3 } from './ProcessRegisterStep3';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import SignNavbar from '../../components/SignNavbar';
+import AppNavbar from '../../components/AppNavbar';
 import Footer from '../../components/Footer';
 
 function RegisterStep3() {
@@ -149,7 +149,7 @@ function RegisterStep3() {
 
   return (
     <div style={{ backgroundColor: '#e9eff6', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <SignNavbar/>
+      <AppNavbar/>
       {/* Main Content */}
       <div style={{ flex: 1 }}>
         <div className="container py-5" style={{ maxWidth: '800px' }}>

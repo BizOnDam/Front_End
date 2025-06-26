@@ -17,7 +17,7 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('▶ 로그인 시도:', form);
+    console.log('Login.jsx 로그인 시도:', form);
     try {
       // login 함수가 response.data 전체 반환한다고 가정
       const { success, message, data } = await login({

@@ -1,12 +1,8 @@
 import { FaFileContract, FaFileDownload } from 'react-icons/fa';
+import { formatDateToYYYYMMDD, formatCurrency } from '../../utils/dateUtils';
+import { getContractUrl } from '../../api/contractApi';
 
-const ContractDetailModal = ({ showModal, selectedContract, onClose, onDownloadContract }) => {
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('ko-KR', {
-      style: 'currency',
-      currency: 'KRW'
-    }).format(amount);
-  };
+const ContractDetailModal = ({ showModal, selectedContract, onClose }) => {
 
   if (!showModal || !selectedContract) return null;
 
@@ -39,7 +35,7 @@ const ContractDetailModal = ({ showModal, selectedContract, onClose, onDownloadC
                       </tr>
                       <tr>
                         <th>계약체결일</th>
-                        <td>{selectedContract.contractCreatedAt?.split('T')[0]}</td>
+                        <td>{formatDateToYYYYMMDD(selectedContract.contractCreatedAt)}</td>
                       </tr>
                       <tr>
                         <th>납품기한</th>
@@ -103,7 +99,7 @@ const ContractDetailModal = ({ showModal, selectedContract, onClose, onDownloadC
               <button 
                 type="button" 
                 className="btn btn-success"
-                onClick={() => onDownloadContract(selectedContract.contractId)}
+                onClick={() => getContractUrl(selectedContract.contractId)}
               >
                 <FaFileDownload className="me-2" />
                 계약서 보기
