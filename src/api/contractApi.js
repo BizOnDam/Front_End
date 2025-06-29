@@ -8,7 +8,7 @@ const openContractPdf = (fileUrl, label = '계약서') => {
 // 계약 체결
 export const generateContract = async (requestId, responseId) => {
   try {
-    const response = await axiosInstance.post(`/api/contracts/${requestId}/${responseId}/generate`);
+    const response = await axiosInstance.post(`/contract-service/api/contracts/${requestId}/${responseId}/generate`);
     openContractPdf(response.data.data, '계약서 생성');
   } catch (error) {
     console.error('계약서 생성 실패:', error);
@@ -19,7 +19,7 @@ export const generateContract = async (requestId, responseId) => {
 // 계약서 조회
 export const getContractUrl = async (contractId) => {
   try {
-    const response = await axiosInstance.get(`/api/contracts/${contractId}/file-url`);
+    const response = await axiosInstance.get(`/contract-service/api/contracts/${contractId}/file-url`);
     openContractPdf(response.data.data, '계약서 조회');
   } catch (error) {
     console.error('계약서 URL 조회 실패:', error);
